@@ -17,6 +17,16 @@ const PORT = Number(process.env.PORT || 3030);
 const DEV = process.env.DEV === '1';
 const ORIGIN = process.env.ORIGIN || '*';
 
+/* 실험용 고정 계정 — DEV=1 이거나 DEMO_EMAIL 을 준 경우에만 살아 있다.
+   아무 때나 켜 두면 그냥 뒷문이므로, 운영에서는 환경변수를 비워 둔다. */
+const DEMO = {
+  email: (process.env.DEMO_EMAIL || (DEV ? 'root@diaru.app' : '')).toLowerCase(),
+  code: process.env.DEMO_CODE || '000000',
+  handle: (process.env.DEMO_HANDLE || 'root').toLowerCase(),
+  name: process.env.DEMO_NAME || '실험용',
+};
+const isDemo = email => !!DEMO.email && email === DEMO.email;
+
 const HANDLE_RE = /^[a-z0-9_]{3,15}$/;
 const RESERVED = ['diaru', 'admin', 'root', 'me', 'official', 'support', 'help'];
 const CODE_TTL = 10 * 60e3;        // 코드 10분
@@ -91,6 +101,7 @@ const routes = {
   'POST /api/auth/request': async (req, body) => {
     const email = String(body.email || '').trim().toLowerCase();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return [400, { error: '이메일을 확인해주세요.' }];
+    if (isDemo(email)) return { sent: true, how: 'demo', ...(DEV ? { code: DEMO.code } : {}) };
     const rec = db.codes[email] || (db.codes[email] = { hour: now(), count: 0 });
     if (now() - rec.hour > 36e5) { rec.hour = now(); rec.count = 0; }
     if (rec.count >= MAX_CODES_PER_HOUR) return [429, { error: '잠시 뒤에 다시 시도해주세요.' }];
@@ -104,6 +115,24 @@ const routes = {
   'POST /api/auth/verify': async (req, body) => {
     const email = String(body.email || '').trim().toLowerCase();
     const code = String(body.code || '').trim();
+    if (isDemo(email)) {
+      if (code !== DEMO.code) return [400, { error: '코드가 맞지 않아요.' }];
+      let demo = db.users[db.byEmail[email]];
+      if (!demo) {
+        const uid = id(8);
+        demo = db.users[uid] = {
+          id: uid, email, handle: DEMO.handle, name: DEMO.name, bio: '', seal: null, cover: null,
+          onboarded: true, created: new Date().toISOString(),
+          friends: [], sent: [], incoming: [], blocked: [],
+        };
+        db.byEmail[email] = uid;
+        if (!db.byHandle[DEMO.handle]) db.byHandle[DEMO.handle] = uid;   /* 남이 선점했으면 그대로 둔다 */
+      }
+      const token = id(32);
+      db.sessions[token] = { user: demo.id, expires: now() + SESSION_TTL };
+      save();
+      return { token, me: selfCard(demo), demo: true };
+    }
     const rec = db.codes[email];
     if (!rec || !rec.hash || rec.expires < now()) return [400, { error: '코드가 만료됐어요. 다시 받아주세요.' }];
     if (rec.tries >= MAX_TRIES) return [429, { error: '너무 많이 틀렸어요. 코드를 다시 받아주세요.' }];

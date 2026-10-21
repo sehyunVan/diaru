@@ -87,10 +87,25 @@ ok(!(await call('GET', '/api/people?q=cloud', null, A)).json.people.length, '차
 ok(!(await call('GET', '/api/friends', null, C)).json.friends.some(f => f.handle === 'sehyun'), '상대 쪽에서도 끊긴다');
 ok((await call('POST', '/api/friends/unblock', { handle: 'cloud' }, A)).json.relation === 'none', '차단 풀기');
 
+/* 실험용 고정 계정 */
+const d1 = await call('POST', '/api/auth/request', { email: 'root@diaru.app' });
+ok(d1.json.how === 'demo' && d1.json.code === '000000', '실험용은 고정 코드');
+ok((await call('POST', '/api/auth/verify', { email: 'root@diaru.app', code: '111111' })).status === 400, '실험용도 코드가 틀리면 거절');
+const demo = await call('POST', '/api/auth/verify', { email: 'root@diaru.app', code: '000000' });
+ok(demo.status === 200 && demo.json.me.handle === 'root' && demo.json.me.onboarded === true, '실험용은 @root 로 바로 로그인');
+const demo2 = await call('POST', '/api/auth/verify', { email: 'root@diaru.app', code: '000000' });
+ok(demo2.json.me.id === demo.json.me.id, '다시 들어가도 같은 계정');
+ok([400, 409].includes((await call('PATCH', '/api/me', { handle: 'root' }, B)).status), '@root 는 남이 못 가져간다');
+
+/* 이미 아이디가 있는 이메일로 다시 들어오면 그 계정 */
+const back = await login('a@example.com');
+ok(back.me.handle === 'sehyun' && back.me.onboarded === true, '쓰던 이메일은 쓰던 계정으로');
+ok(back.me.name === '세현의 기록', '이름도 그대로 돌려준다');
+
 /* 저장이 진짜 파일로 남는가 */
 await sleep(300);
 const saved = JSON.parse(fs.readFileSync(DATA, 'utf8'));
-ok(Object.keys(saved.users).length === 3 && saved.byHandle.sehyun, '파일에 그대로 남는다');
+ok(Object.keys(saved.users).length === 4 && saved.byHandle.sehyun && saved.byHandle.root, '파일에 그대로 남는다(실험용 포함)');
 ok((await call('POST', '/api/auth/logout', {}, A)).json.ok && (await call('GET', '/api/me', null, A)).status === 401, '로그아웃하면 토큰이 죽는다');
 
 console.log(`\n${pass}개 통과${fail ? ` · ${fail}개 실패` : ''}`);

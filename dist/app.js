@@ -617,12 +617,16 @@ async function api(method,path,body){
  if(!r.ok)throw Object.assign(new Error(json.error||'서버가 응답하지 않아요.'),{status:r.status});
  return json}
 function adoptAccount(acc){
- me.handle=acc.handle||me.handle;me.onboarded=!!acc.onboarded;
- if(acc.name){try{localStorage.setItem('diaru-profile-name',acc.name)}catch{}
-  const h1=$('.profile-detail h1');if(h1)h1.textContent=acc.name}
- if(typeof acc.bio==='string'&&acc.bio)me.bio=acc.bio;
- if(acc.seal)me.seal=acc.seal;
- if(acc.cover)me.cover=acc.cover;
+ /* 이미 꾸려 둔 계정이면 서버 것이 진짜다 — 기기에 남아 있던 프로필은 덮는다.
+    갓 만든 계정이면(아직 가입 중) 비어 있으니 기기 값을 그대로 둔다. */
+ const settled=!!acc.onboarded;
+ me.handle=acc.handle||me.handle;me.onboarded=settled;
+ const name=settled?(acc.name||'my little diary ♡'):acc.name;
+ if(name){try{localStorage.setItem('diaru-profile-name',name)}catch{}
+  const h1=$('.profile-detail h1');if(h1)h1.textContent=name}
+ if(settled||acc.bio)me.bio=typeof acc.bio==='string'&&acc.bio?acc.bio:'오늘도 예쁜 하루를 모으는 중';
+ if(settled||acc.seal)me.seal=acc.seal||{pack:'hand',sprite:0};
+ if(settled||acc.cover)me.cover=acc.cover||'harbor';
  saveMe();renderProfile();$('#profile-logout').classList.remove('hidden')}
 async function pushProfile(patch){if(!API.on||!API.token)return;
  try{await api('PATCH','api/me',patch)}catch(e){toast(e.message)}}
