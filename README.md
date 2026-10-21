@@ -63,6 +63,33 @@ node server/test.mjs                        # 서버 한 바퀴(32개 검사)
 앱은 켜질 때 `api/health` 를 한 번 두드려 **서버가 있으면 계정이 서버에, 없으면 이 기기에** 산다.
 화면은 같고 저장되는 곳만 달라진다.
 
+## 배포 (2026-10-21)
+
+**https://diaru.64-227-141-147.sslip.io** — 앱과 API 를 같은 Node 서버가 내보낸다.
+
+| 무엇 | 어디 |
+| --- | --- |
+| 코드 | `/opt/diaru` (dist + server) |
+| 저장 | `/var/lib/diaru/db.json` |
+| 서비스 | `systemctl status diaru` · 포트 4200 · `journalctl -u diaru -f` |
+| 앞단 | `/etc/caddy/Caddyfile` 의 `diaru.…sslip.io` 블록 → 127.0.0.1:4200 |
+
+올릴 때:
+
+```bash
+tar -czf /tmp/diaru.tgz dist server
+scp /tmp/diaru.tgz blr:/tmp/ && ssh blr 'cd /opt/diaru && tar -xzf /tmp/diaru.tgz && systemctl restart diaru'
+```
+
+- **메일이 아직 안 붙었다.** 코드는 서버 기록에만 남는다 — `journalctl -u diaru -f` 에서
+  `[코드] you@… → 123456` 를 보고 넣으면 된다. `RESEND_API_KEY` 와 `MAIL_FROM` 을
+  서비스 파일에 넣고 `systemctl restart diaru` 하면 진짜 메일로 나간다.
+- **실험용 계정이 켜져 있다**: `root@diaru.app` / `000000` / `@root`.
+  주소를 아는 사람은 누구나 들어올 수 있다 — 쓸 일이 끝나면 서비스 파일의
+  `DEMO_EMAIL`·`DEMO_CODE` 두 줄을 지우고 재시작한다.
+- Caddy 는 이 박스의 다른 사이트들과 **같은 파일을 쓴다**. 고치기 전에 백업하고
+  `caddy validate` 로 본 뒤 reload 한다(트레이딩 루프가 같이 도는 박스다).
+
 ## 구조
 
 ```
