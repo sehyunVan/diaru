@@ -445,3 +445,7 @@ body{background:radial-gradient(ellipse at 50% 22%,#f2f2f6,#e5e6ee)}
 .auth-name{width:100%;max-width:280px;padding:12px 15px;border:1px solid var(--line);border-radius:14px;
  background:#fff;text-align:center;outline:none;font-size:13px;color:var(--navy)}
 .auth-name:focus{border-color:var(--sage)}
+
+#auth-email-hint.bad,#auth-code-hint.bad{color:#b2827a}
+#auth-code-input{text-align:center;letter-spacing:6px;font-size:18px}
+#profile-logout{margin-top:-12px;color:#a98f8f}

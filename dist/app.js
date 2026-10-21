@@ -561,7 +561,7 @@ function commitProfile(){const name=$('#profile-name-input').value.trim().slice(
   if(!HANDLE_RE.test(hd))toast('아이디는 영문 소문자·숫자·밑줄 3~15자예요.');
   else if(RESERVED.includes(hd)||personBy(hd))toast('이미 쓰이고 있는 아이디예요.');
   else{me.handle=hd;toast('이제 @'+hd+' 예요.')}}
- saveMe();renderProfile()}
+ saveMe();renderProfile();pushProfile({handle:me.handle,name:$('.profile-detail h1').textContent,bio:me.bio})}
 $('#profile-edit-toggle').onclick=()=>setProfileEditing(!editingProfile);
 $('#profile-seal').onclick=()=>{if(editingProfile)$('#seal-input').click();else setProfileEditing(true)};
 $('.profile-cover').onclick=()=>{if(editingProfile)$('#cover-input').click()};
@@ -573,7 +573,7 @@ $('#seal-input').onchange=e=>{const file=e.target.files[0];e.target.value='';if(
    g.drawImage(img,(img.width-sw)/2,(img.height-sh)/2,sw,sh,0,0,S,S);
    const prev=me.seal;me.seal={src:c.toDataURL('image/jpeg',.85),fit:'cover'};
    try{localStorage.setItem('diaru-me',JSON.stringify(me))}catch{me.seal=prev;return toast('사진이 너무 커요. 다른 사진으로 해주세요.')}
-   renderProfile();renderAuthPreview();toast('인장을 바꿨어요.')};
+   renderProfile();renderAuthPreview();pushProfile({seal:me.seal});toast('인장을 바꿨어요.')};
   img.onerror=()=>toast('JPG 또는 PNG 사진으로 다시 시도해주세요.');img.src=reader.result};
  reader.readAsDataURL(file)};
 $('#cover-input').onchange=e=>{const file=e.target.files[0];e.target.value='';if(!file)return;
@@ -584,7 +584,7 @@ $('#cover-input').onchange=e=>{const file=e.target.files[0];e.target.value='';if
    g.drawImage(img,(img.width-sw)/2,(img.height-sh)/2,sw,sh,0,0,1000,750);
    const prev=me.cover;me.cover=c.toDataURL('image/jpeg',.8);
    try{localStorage.setItem('diaru-me',JSON.stringify(me))}catch{me.cover=prev;return toast('사진이 너무 커요. 다른 사진으로 해주세요.')}
-   renderProfile();renderAuthPreview();toast('배경화면을 바꿨어요.')};
+   renderProfile();renderAuthPreview();pushProfile({cover:me.cover});toast('배경화면을 바꿨어요.')};
   img.onerror=()=>toast('JPG 또는 PNG 사진으로 다시 시도해주세요.');img.src=reader.result};
  reader.readAsDataURL(file)};
 saveMe();saveSocial();
@@ -605,6 +605,37 @@ function renderPapers(){['#home-papers','#shop-papers'].forEach(sel=>{const root
 /* ── 가입 ───────────────────────────────────────────
    계정은 아직 이 기기에만 있다. 서버가 붙으면 startAuth/finishAuth 사이에
    로그인 한 단계(이메일 코드 등)를 끼우고, me 를 서버가 돌려준 계정으로 바꾸면 된다. */
+/* ── 서버 ───────────────────────────────────────────
+   서버가 있으면(같은 주소에서 /api/health 가 답하면) 계정은 서버에 산다.
+   없으면 지금까지처럼 이 기기에만 있다 — 화면은 같고 저장되는 곳만 달라진다. */
+const API={token:null,on:false,email:''};
+try{API.token=localStorage.getItem('diaru-token')}catch{}
+async function api(method,path,body){
+ const r=await fetch(path,{method,headers:{'Content-Type':'application/json',
+  ...(API.token?{Authorization:'Bearer '+API.token}:{})},body:body?JSON.stringify(body):undefined});
+ const json=await r.json().catch(()=>({}));
+ if(!r.ok)throw Object.assign(new Error(json.error||'서버가 응답하지 않아요.'),{status:r.status});
+ return json}
+function adoptAccount(acc){
+ me.handle=acc.handle||me.handle;me.onboarded=!!acc.onboarded;
+ if(acc.name){try{localStorage.setItem('diaru-profile-name',acc.name)}catch{}
+  const h1=$('.profile-detail h1');if(h1)h1.textContent=acc.name}
+ if(typeof acc.bio==='string'&&acc.bio)me.bio=acc.bio;
+ if(acc.seal)me.seal=acc.seal;
+ if(acc.cover)me.cover=acc.cover;
+ saveMe();renderProfile();$('#profile-logout').classList.remove('hidden')}
+async function pushProfile(patch){if(!API.on||!API.token)return;
+ try{await api('PATCH','api/me',patch)}catch(e){toast(e.message)}}
+async function connectServer(){
+ try{const r=await fetch('api/health',{cache:'no-store'});if(!r.ok)return false;API.on=true}catch{return false}
+ if(API.token){try{adoptAccount((await api('GET','api/me')).me)}
+  catch{API.token=null;try{localStorage.removeItem('diaru-token')}catch{}}}
+ return true}
+$('#profile-logout').onclick=async()=>{if(!confirm('로그아웃할까요?'))return;
+ try{await api('POST','api/auth/logout',{})}catch{}
+ API.token=null;try{localStorage.removeItem('diaru-token')}catch{}
+ me.onboarded=false;saveMe();location.reload()};
+
 function showAuthStep(id){$$('#auth .auth-step').forEach(s=>s.classList.toggle('hidden',s.id!==id))}
 function renderAuthPreview(){const seal=$('#auth-seal');if(!seal)return;
  seal.replaceChildren(sealNode());
@@ -613,16 +644,46 @@ function renderAuthPreview(){const seal=$('#auth-seal');if(!seal)return;
  $('#auth-cover').classList.toggle('filled',has)}
 function startAuth(){$('#landing').classList.add('hidden');$('#auth').classList.remove('hidden');
  $$('.app > :not(#landing):not(#auth)').forEach(e=>e.inert=true);
+ if(API.on){showAuthStep('auth-email');$('#auth-email-input').value=API.email;
+  setTimeout(()=>$('#auth-email-input').focus(),60);return}
  showAuthStep('auth-handle');
  $('#auth-handle-input').value=me.handle;$('#auth-hint').classList.remove('bad');
  setTimeout(()=>$('#auth-handle-input').focus(),60)}
+async function sendCode(){const email=$('#auth-email-input').value.trim();
+ if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){$('#auth-email-hint').textContent='이메일을 확인해주세요.';$('#auth-email-hint').classList.add('bad');return}
+ $('#auth-send').disabled=true;$('#auth-email-hint').classList.remove('bad');$('#auth-email-hint').textContent='보내는 중…';
+ try{const out=await api('POST','api/auth/request',{email});API.email=email;
+  showAuthStep('auth-code');$('#auth-code-input').value=out.code||'';
+  $('#auth-code-hint').textContent=out.how==='logged'?'메일이 아직 연결되지 않아 서버 기록에 남겼어요.':email+' 로 보냈어요.';
+  $('#auth-code-hint').classList.remove('bad');setTimeout(()=>$('#auth-code-input').focus(),60)}
+ catch(e){$('#auth-email-hint').textContent=e.message;$('#auth-email-hint').classList.add('bad')}
+ finally{$('#auth-send').disabled=false}}
+$('#auth-send').onclick=sendCode;
+$('#auth-resend').onclick=()=>{showAuthStep('auth-email');$('#auth-email-hint').textContent='코드를 보내드려요. 비밀번호는 없어요.'};
+$('#auth-email-input').onkeydown=e=>{if(e.key==='Enter')sendCode()};
+$('#auth-verify').onclick=async()=>{const code=$('#auth-code-input').value.trim();
+ $('#auth-verify').disabled=true;
+ try{const out=await api('POST','api/auth/verify',{email:API.email,code});
+  API.token=out.token;try{localStorage.setItem('diaru-token',out.token)}catch{}
+  adoptAccount(out.me);
+  if(out.me.onboarded){finishAuth();return}
+  showAuthStep('auth-handle');$('#auth-handle-input').value=out.me.handle;
+  $('#auth-hint').classList.remove('bad');setTimeout(()=>$('#auth-handle-input').focus(),60)}
+ catch(e){$('#auth-code-hint').textContent=e.message;$('#auth-code-hint').classList.add('bad')}
+ finally{$('#auth-verify').disabled=false}};
+$('#auth-code-input').onkeydown=e=>{if(e.key==='Enter')$('#auth-verify').click()};
 function finishAuth(){me.onboarded=true;saveMe();renderProfile();
+ pushProfile({handle:me.handle,name:$('.profile-detail h1').textContent,bio:me.bio,seal:me.seal,cover:me.cover,onboarded:true});
  $('#auth').classList.add('hidden');$$('.app > :not(#landing):not(#auth)').forEach(e=>e.inert=false);
  goto('home')}
 $('#enter-app').onclick=()=>{if(me.onboarded){goto('home');$('.app-header .logo')?.focus()}else startAuth()};
-$('#auth-next').onclick=()=>{const hd=$('#auth-handle-input').value.trim().toLowerCase().replace(/^@/,'');
- const bad=!HANDLE_RE.test(hd)?'영문 소문자·숫자·밑줄 3~15자로 적어주세요'
+$('#auth-next').onclick=async()=>{const hd=$('#auth-handle-input').value.trim().toLowerCase().replace(/^@/,'');
+ let bad=!HANDLE_RE.test(hd)?'영문 소문자·숫자·밑줄 3~15자로 적어주세요'
   :(RESERVED.includes(hd)||personBy(hd))?'이미 쓰이고 있는 아이디예요':'';
+ if(!bad&&API.on){ /* 진짜 중복은 서버가 잡는다 */
+  $('#auth-next').disabled=true;
+  try{await api('PATCH','api/me',{handle:hd})}catch(e){bad=e.message}
+  $('#auth-next').disabled=false}
  $('#auth-hint').textContent=bad||'영문 소문자 · 숫자 · 밑줄 3~15자';
  $('#auth-hint').classList.toggle('bad',!!bad);
  if(bad)return;
@@ -638,6 +699,7 @@ $('#auth-done').onclick=()=>{const name=$('#auth-name-input').value.trim().slice
 $('#auth-skip').onclick=finishAuth;
 $$('.app > :not(#landing)').forEach(e=>e.inert=true);
 renderDiaries();renderPapers();renderStickers();renderEditorStickers();renderPeople();renderProfile();
+connectServer().then(on=>{if(on)console.log('서버에 연결됨')});
 
 
 
