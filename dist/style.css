@@ -358,3 +358,27 @@ body{background:radial-gradient(ellipse at 50% 22%,#f2f2f6,#e5e6ee)}
 /* 늘어난 스티커 팩 */
 .pack-foil{--sheet:url('assets/stickers-foil.png')}.pack-press{--sheet:url('assets/stickers-press.png')}.pack-stamp{--sheet:url('assets/stickers-stamp.png')}.pack-clay{--sheet:url('assets/stickers-clay.png')}
 .art.pack-foil,.art.pack-press,.art.pack-stamp,.art.pack-clay,.piece.sticker.pack-foil,.piece.sticker.pack-press,.piece.sticker.pack-stamp,.piece.sticker.pack-clay{mix-blend-mode:normal}
+
+
+/* ───── 월간 · 주간 플래너 다시 ───── */
+#paper.p-month,.feed-spread.p-month,.paper-tile.p-month{
+ background-image:
+  linear-gradient(#7e736310 0 calc(var(--pu)*108.8),#7e736359 calc(var(--pu)*108.8) calc(var(--pu)*110),transparent calc(var(--pu)*110)),
+  repeating-linear-gradient(#7e736333 0 max(.5px,calc(var(--pu)*1.2)),transparent max(.5px,calc(var(--pu)*1.2)) calc(var(--pu)*178)),
+  repeating-linear-gradient(90deg,#7e73632e 0 max(.5px,calc(var(--pu)*1.2)),transparent max(.5px,calc(var(--pu)*1.2)) calc(var(--pu)*150));
+ background-size:auto;background-position:0 0,0 calc(var(--pu)*110),0 0}
+#paper.p-weekly,.feed-spread.p-weekly,.paper-tile.p-weekly{
+ background-image:
+  linear-gradient(90deg,transparent 0 calc(var(--pu)*599),#7e736340 calc(var(--pu)*599) calc(var(--pu)*600.4),transparent calc(var(--pu)*600.4)),
+  repeating-linear-gradient(transparent 0 calc(var(--pu)*28),#7e73632b calc(var(--pu)*28) calc(var(--pu)*29.2),transparent calc(var(--pu)*29.2) calc(var(--pu)*250)),
+  repeating-linear-gradient(#7e736345 0 max(.5px,calc(var(--pu)*1.2)),transparent max(.5px,calc(var(--pu)*1.2)) calc(var(--pu)*250)),
+  repeating-linear-gradient(transparent 0 calc(var(--pu)*49),#7e73631f calc(var(--pu)*49) calc(var(--pu)*50));
+ background-size:auto}
+.paper-chrome span{top:auto;width:auto;font-size:24px;letter-spacing:0}
+.paper-chrome .mid{text-align:center}
+.paper-chrome .left{text-align:left}
+.paper-chrome .memo{color:#a8a295}
+.paper-chrome.mini span{font-size:5.5px;letter-spacing:0}
+.paper-tile .paper-chrome{display:none}
+
+.paper-area{touch-action:pan-x pan-y}

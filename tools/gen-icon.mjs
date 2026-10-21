@@ -53,12 +53,11 @@ const DRAW = String.raw`window.__icon=async function(kind,size,k){k=k||1;
   g.closePath();g.fill();g.restore()};
  if(kind==='star'){star(size/2,size/2,size*0.34*k,gold)}
  else{
-  const letter='D',fs=Math.round(size*0.64*k);
+  const letter='D',fs=Math.round(size*0.86*k);
   g.font='400 '+fs+'px "Nanum Pen Script", cursive';g.textAlign='center';g.textBaseline='alphabetic';
   const m=g.measureText(letter),h=m.actualBoundingBoxAscent+m.actualBoundingBoxDescent;
   g.fillStyle=kind==='ivory'?navy:ivory;
-  g.fillText(letter,size*(0.5-0.045*k),size/2+h/2-m.actualBoundingBoxDescent);
-  star(size*(0.5+0.275*k),size*(0.5-0.175*k),size*0.105*k,gold);
+  g.fillText(letter,size/2,size/2+h/2-m.actualBoundingBoxDescent); /* 별은 뺐다 — 글자 하나로 */
  }
  return c.toDataURL('image/png')};
 `;

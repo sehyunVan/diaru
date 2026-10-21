@@ -41,8 +41,8 @@ image_gen 으로 만든 첫 시트. 프롬프트:
 
 ## dist/icons — 앱 아이콘
 
-로고와 같은 글꼴(Nanum Pen Script)의 D 와 금색 네 갈래 별. 그림이 아니라 글자라
+로고와 같은 글꼴(Nanum Pen Script)의 D 한 글자. 그림이 아니라 글자라
 브라우저에서 글꼴을 불러 캔버스로 굽는다: `node tools/gen-icon.mjs [navy|ivory|star]`.
-`_candidates.png` 가 세 안을 나란히 보여주고, 지금 쓰는 건 **ivory**.
+`_candidates.png` 가 세 안을 나란히 보여주고, 지금 쓰는 건 **ivory**(별 없이 D 만, 크게).
 마스킹용(안드로이드)은 같은 그림을 74%로 줄여 가장자리가 잘려도 글자가 남게 했다.
 별은 바깥 꼭지 넷을 중심(0,0)을 제어점 삼아 이어 그린다 — `moveTo` 를 빠뜨리면 첫 꼭지가 어긋난다.
