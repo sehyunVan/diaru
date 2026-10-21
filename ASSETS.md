@@ -16,12 +16,12 @@ node tools/make-photos.mjs cat     # 하나만
 
 | 파일 | 쓰이는 곳 |
 | --- | --- |
-| `clouds.jpg` | 시작 화면 하늘, 템플릿 둘째 사진 |
-| `dusk.jpg` | 홈 오늘 카드, 템플릿 2종 |
-| `harbor.jpg` | 프로필 커버, 여행 템플릿 |
-| `forest.jpg` | 상점 템플릿 썸네일, 초록빛 주말 |
-| `cat.jpg` | 프로필 아바타, 감성 노트 템플릿 |
-| `garden.jpg` `lanterns.jpg` `sky.jpg` `street.jpg` | 나머지 템플릿·기본 조각 |
+| `clouds.jpg` | 시작 화면 하늘 · @cloudpocket |
+| `dusk.jpg` | 홈 오늘 카드 · @slowlantern |
+| `harbor.jpg` | 프로필 커버 · @nightharbor |
+| `forest.jpg` | @greenweekend · @dotgarden |
+| `cat.jpg` | 프로필 아바타 · @pixelcat |
+| `garden.jpg` `lanterns.jpg` `sky.jpg` `street.jpg` | 친구들의 기록에 깔리는 사진 |
 
 원본(`assets/reference/`, 93MB)과 줄이기 전 스티커 시트(`assets/src/`)는 `.gitignore` 로 뺐다.
 
