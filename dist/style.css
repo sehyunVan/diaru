@@ -382,3 +382,25 @@ body{background:radial-gradient(ellipse at 50% 22%,#f2f2f6,#e5e6ee)}
 .paper-tile .paper-chrome{display:none}
 
 .paper-area{touch-action:pan-x pan-y}
+
+/* ───── 펼친 책 · 남의 프로필 ───── */
+.diary-card.open{text-align:left}
+.diary-card.open .feed-spread{aspect-ratio:1.2;border-radius:6px;box-shadow:0 3px 9px #2a3a5714}
+.diary-card.open p{display:inline-block;margin:9px 0 4px}
+.diary-card.open h3{font-size:10px;color:var(--navy);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#profile-diaries{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 12px}
+#profile-diaries .diary-card p{display:inline-block;font-size:8px;padding:3px 8px}
+.person{cursor:pointer}
+.person:active{background:#f4f1e9}
+.profile-portrait.veiled img{filter:blur(5px) saturate(.7)}
+.person-page-actions{display:flex;justify-content:center;align-items:center;gap:6px;margin:18px 0 24px}
+.person-page-actions .person-btn{padding:10px 22px;font-size:11px}
+#person .profile-detail h1{margin:12px 0 5px}
+#person .profile-handle{margin-bottom:9px}
+#person .profile-detail>p{font-size:10px;color:#929bac;margin:0}
+#person .section-title{margin-top:8px}
+#person .diary-grid{grid-template-columns:1fr;gap:14px}
+.custom-art.photo{object-fit:cover;border-radius:50%}
+.picker-grid .picker-add{font-size:20px;color:#8b97a9}
+#person .profile-handle:after{content:none}
+#person .profile-portrait img{width:67px;height:67px;object-fit:cover;border-radius:50%}
