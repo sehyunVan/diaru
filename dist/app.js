@@ -1,4 +1,9 @@
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+/* 시작하기는 제일 먼저 묶어 둔다 — 아래에서 무엇이 터져도 첫 화면에 갇히지는 않도록.
+   (옛 저장본 때문에 초기화가 죽어 버튼이 아예 안 붙은 적이 있다) */
+$('#enter-app').onclick=()=>{$('#landing').classList.add('hidden');
+ $$('.app > :not(#landing)').forEach(e=>e.inert=false);
+ $$('.page').forEach(e=>e.classList.toggle('hidden',e.id!=='home'))};
 const paths={home:'<path d="m3 10 9-7 9 7v10h-6v-7H9v7H3Z"/>',book:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 3v18m3-13h5m-5 4h5"/>',smile:'<circle cx="12" cy="12" r="9"/><path d="M8 14q4 5 8 0M8 8v1m8-1v1"/>',search:'<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>',plus:'<path d="M12 4v16M4 12h16"/>',image:'<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 6-6 4 4 3-3 5 5"/>',share:'<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="5" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8 11 8-5m-8 7 8 5"/>',back:'<path d="m14 5-7 7 7 7"/>',user:'<circle cx="12" cy="7" r="4"/><path d="M5 21v-3a7 7 0 0 1 14 0v3Z"/>',palette:'<path d="M12 3a9 9 0 1 0 0 18c4 0 1-5 4-5h2c5 0 4-13-6-13Z"/><path d="M7 9h.01M10 6h.01M15 7h.01M7 14h.01"/>',trash:'<path d="M4 6h16M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7"/>',download:'<path d="M12 3v11m0 0 4.5-4.5M12 14l-4.5-4.5M4 20h16"/>'};
 Object.assign(paths,{bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M9 21h6"/>',shop:'<path d="M3 9h18l-2-6H5L3 9Zm1 0v12h16V9M9 21v-7h6v7M3 9q2 5 4.5 0 2 5 4.5 0 2 5 4.5 0 2 5 4.5 0"/>',feed:'<rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 7h8M8 16h5"/><rect x="8" y="10" width="8" height="3" rx="1"/>'});
 $$('[data-icon]').forEach(e=>e.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${paths[e.dataset.icon]||paths.book}</svg>`);
@@ -235,10 +240,7 @@ social.friends=Array.isArray(social.friends)?social.friends:[];
 social.sent=Array.isArray(social.sent)?social.sent:[];
 social.declined=Array.isArray(social.declined)?social.declined:[];
 social.blocked=Array.isArray(social.blocked)?social.blocked:[];
-if(Array.isArray(social.following)){ /* 옛 저장본: 팔로우 → 보낸 신청(맞팔이던 사이는 친구) */
- social.following.forEach(hd=>{if(PEOPLE_FOLLOWS_ME.has(hd)){if(!social.friends.includes(hd))social.friends.push(hd)}
-  else if(!social.sent.includes(hd))social.sent.push(hd)});
- delete social.following}
+
 function saveMe(){try{localStorage.setItem('diaru-me',JSON.stringify(me))}catch{}}
 function saveSocial(){try{localStorage.setItem('diaru-social',JSON.stringify(social))}catch{}}
 
@@ -254,6 +256,11 @@ const PEOPLE=[
 ];
 const personBy=hd=>PEOPLE.find(p=>p.handle===hd);
 const PEOPLE_FOLLOWS_ME=new Set(PEOPLE.filter(p=>p.followsMe).map(p=>p.handle));
+if(Array.isArray(social.following)){ /* 옛 저장본: 팔로우 → 보낸 신청(맞팔이던 사이는 친구) */
+ social.following.forEach(hd=>{if(PEOPLE_FOLLOWS_ME.has(hd)){if(!social.friends.includes(hd))social.friends.push(hd)}
+  else if(!social.sent.includes(hd))social.sent.push(hd)});
+ delete social.following}
+saveSocial(); /* 이사한 결과를 바로 굳힌다 */
 const isBlocked=hd=>social.blocked.includes(hd);
 const isFriend=hd=>!isBlocked(hd)&&social.friends.includes(hd);
 const isSent=hd=>social.sent.includes(hd);                 /* 내가 보낸 신청 — 상대가 수락해야 친구 */
