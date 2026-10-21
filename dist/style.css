@@ -225,7 +225,7 @@ body{background:radial-gradient(ellipse at 50% 22%,#f2f2f6,#e5e6ee)}
 
 /* Sunset scrapbook welcome screen. All decoration stays within the landing. */
 #landing{display:block;isolation:isolate;overflow-y:auto;overflow-x:hidden;background:#fbf3e4;color:#334563;container-type:inline-size}
-#landing:after{content:'';position:absolute;inset:0;pointer-events:none;z-index:4;opacity:.15;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23988768' opacity='.35' filter='url(%23n)' d='M0 0h180v180H0z'/%3E%3C/svg%3E")}
+#landing:after{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;opacity:.15;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23988768' opacity='.35' filter='url(%23n)' d='M0 0h180v180H0z'/%3E%3C/svg%3E")}
 .landing-sky{position:absolute;inset:0;height:100%;z-index:-2;pointer-events:none}
 .landing-sky img{width:100%;height:79%;object-fit:cover;object-position:50% 20%;filter:saturate(.85)}
 .landing-sky:after{background:linear-gradient(180deg,#4b739626 0%,#fbf3e400 30%,#fbf3e480 42%,#fbf3e4eb 62%,#fbf3e4 79%,#fff3d9 100%)}
@@ -239,13 +239,13 @@ body{background:radial-gradient(ellipse at 50% 22%,#f2f2f6,#e5e6ee)}
 .landing-actions .landing-avatar{width:36px;height:36px;margin-left:5px;border:2px solid #fff9ed;overflow:hidden;box-shadow:0 2px 8px #394f6820}
 .landing-avatar img{width:100%;height:100%;object-fit:cover}
 #landing button:focus-visible{outline:2px solid #334563;outline-offset:4px}
-.landing-body{position:relative;min-height:100%;height:100%;margin:0;padding:0;display:block;min-height:600px}
+.landing-body{position:relative;z-index:1;min-height:100%;height:100%;margin:0;padding:0;display:block;min-height:600px}
 .landing-title{position:absolute;top:43%;left:12%;right:12%;text-align:center}
-.landing-logo{display:inline-block;position:relative;font-family:'Gaegu',cursive;font-size:clamp(60px,20cqw,88px);line-height:1;font-weight:700;letter-spacing:1px;color:#304263;margin:0}
+.landing-logo{display:inline-block;position:relative;font-family:'Nanum Pen Script',cursive;font-size:clamp(60px,20cqw,88px);line-height:1;font-weight:400;letter-spacing:1px;color:#304263;margin:0}
 .landing-logo span{position:absolute;right:-23px;top:0;color:#c49b4d;font:34px/1 Georgia,serif;margin:0;transform:rotate(10deg)}
 .landing-sub{font-family:'Gaegu',cursive;font-size:clamp(17px,5.3cqw,23px);letter-spacing:1px;line-height:1.55;color:#52617a;margin:14px 0 0;transform:rotate(-5deg)}
-.landing-cat{width:25cqw;height:25cqw;right:-13%;top:15%;transform:rotate(7deg)}
-.landing-heart{position:absolute;right:-10%;bottom:0;font:23px 'Gaegu',cursive;transform:rotate(12deg)}
+.landing-cat{width:25cqw;height:25cqw;right:-13%;top:15%;transform:rotate(7deg);mix-blend-mode:normal;mask:url("assets/landing-cat-mask.svg") center/100% 100% no-repeat}
+.landing-heart{position:absolute;right:-10%;top:calc(15% + 25cqw - 8px);bottom:auto;font:23px 'Gaegu',cursive;transform:rotate(12deg)}
 .landing-spark{position:absolute;pointer-events:none;color:#fff8dc;line-height:1}
 .spark-one{right:13%;top:17%;font-size:28px;transform:rotate(6deg)}
 .spark-two{left:14%;top:39%;font-size:26px}
@@ -281,3 +281,51 @@ body{background:radial-gradient(ellipse at 50% 22%,#f2f2f6,#e5e6ee)}
 #home-papers h3{font-size:9px;margin-top:7px}
 #shop-papers{margin-bottom:26px}
 #home-papers{margin-bottom:4px}
+
+.editor-tools{grid-template-columns:repeat(5,1fr)}
+#export svg{width:17px;height:17px}
+
+
+/* ───── 월간 플래너 속지 ───── */
+#paper.p-month,.feed-spread.p-month,.paper-tile.p-month{
+ background-image:
+  linear-gradient(#7e73630f 0 calc(var(--pu)*126.8),#7e736359 calc(var(--pu)*126.8) calc(var(--pu)*128),transparent calc(var(--pu)*128)),
+  repeating-linear-gradient(#7e736333 0 max(.5px,calc(var(--pu)*1.2)),transparent max(.5px,calc(var(--pu)*1.2)) calc(var(--pu)*174.4)),
+  repeating-linear-gradient(90deg,#7e73632e 0 max(.5px,calc(var(--pu)*1.2)),transparent max(.5px,calc(var(--pu)*1.2)) calc(var(--pu)*171.43));
+ background-size:auto;background-position:0 0,0 calc(var(--pu)*128),0 0}
+.paper-tile.p-month{--pu:.093}
+.paper-chrome{position:absolute;inset:0;z-index:0;pointer-events:none}
+.paper-chrome span{position:absolute;top:50px;width:171.43px;text-align:center;font-family:'Noto Sans KR',sans-serif;font-size:25px;color:#8c8676;letter-spacing:2px}
+.paper-chrome .sun{color:#b2827a}.paper-chrome .sat{color:#7f8fa6}
+.paper-chrome.mini span{top:4.5%;width:14.28%;font-size:6px;letter-spacing:0}
+
+
+/* ───── 프로필 편집란 ───── */
+.profile-avatar .art,.profile-avatar .custom-art{width:100%;height:100%;border-radius:50%;object-fit:contain}
+.profile-portrait{position:relative;display:grid;place-items:center;padding:0}
+.profile-portrait .custom-art{width:67px;height:67px;border-radius:50%;object-fit:contain}
+.edit-badge{display:none;position:absolute;right:0;bottom:0;width:26px;height:26px;border-radius:50%;background:var(--navy);color:#fff;font-size:11px;align-items:center;justify-content:center;box-shadow:0 2px 6px #2a3a5733}
+.profile-cover .edit-badge{right:16px;bottom:16px;width:30px;height:30px;font-size:13px}
+#profile.editing .edit-badge{display:flex}
+#profile.editing .profile-cover{cursor:pointer}
+.profile-input{display:none;width:100%;max-width:260px;margin:0 auto 7px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;text-align:center;outline:none;font-size:11px;color:var(--navy)}
+.profile-input:focus{border-color:var(--sage)}
+.profile-input.name{font-size:14px}
+#profile.editing .profile-input{display:block}
+#profile.editing .profile-name,#profile.editing .profile-handle,#profile.editing .profile-bio{display:none}
+#profile.editing .profile-lock{opacity:.5}
+.profile-edit{display:block;width:auto;margin:0 auto 20px;padding:9px 18px;border:1px solid var(--line);border-radius:20px;background:#fff;font-size:10px;color:#6d7a90}
+#profile.editing .profile-edit{background:var(--navy);color:#fff;border-color:var(--navy)}
+.profile-picker{margin:0 0 22px;padding:13px;border:1px solid var(--line);border-radius:14px;background:var(--ivory-2)}
+.picker-row{display:flex;gap:8px;overflow:auto;scrollbar-width:none;padding-bottom:2px}
+.picker-row::-webkit-scrollbar{display:none}
+.picker-row>button{flex-shrink:0;width:78px;height:56px;border-radius:9px;overflow:hidden;border:1px solid #e3ded2;background:#fff;display:grid;place-items:center}
+.picker-row>button.on{box-shadow:0 0 0 2px var(--navy)}
+.picker-row img{width:100%;height:100%;object-fit:cover}
+.picker-add{color:#8b97a9;font-size:20px;border-style:dashed!important}
+.picker-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:10px;max-height:168px;overflow:auto;scrollbar-width:none}
+.picker-grid>button{aspect-ratio:1;border:1px solid var(--line);border-radius:9px;background:#fff;display:grid;place-items:center}
+.picker-grid .art,.picker-grid .custom-art{width:84%;height:84%;object-fit:contain}
+.picker-grid .storage-note{grid-column:1/-1;margin:14px 0}
+.profile-picker .chips{margin-bottom:0}
+.profile-cover{position:relative}

@@ -36,3 +36,11 @@ image_gen 으로 만든 첫 시트. 프롬프트:
 화풍이 다른 스티커 팩 4종(각 4×4=16개, 배경 투명). 프롬프트는 `tools/gen-stickers.mjs` 안에 있다.
 다시 구우려면 `node tools/gen-stickers.mjs [팩이름] [--force]`.
 retro·ink·jelly 는 768px 로 줄여 넣었고(원본은 `assets/src/`), 도트는 줄이면 픽셀이 뭉개져 1024 그대로다.
+
+## dist/icons — 앱 아이콘
+
+로고와 같은 글꼴(Nanum Pen Script)의 D 와 금색 네 갈래 별. 그림이 아니라 글자라
+브라우저에서 글꼴을 불러 캔버스로 굽는다: `node tools/gen-icon.mjs [navy|ivory|star]`.
+`_candidates.png` 가 세 안을 나란히 보여주고, 지금 쓰는 건 **ivory**.
+마스킹용(안드로이드)은 같은 그림을 74%로 줄여 가장자리가 잘려도 글자가 남게 했다.
+별은 바깥 꼭지 넷을 중심(0,0)을 제어점 삼아 이어 그린다 — `moveTo` 를 빠뜨리면 첫 꼭지가 어긋난다.
