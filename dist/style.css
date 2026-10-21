@@ -293,7 +293,7 @@ body{background:radial-gradient(ellipse at 50% 22%,#f2f2f6,#e5e6ee)}
   repeating-linear-gradient(#7e736333 0 max(.5px,calc(var(--pu)*1.2)),transparent max(.5px,calc(var(--pu)*1.2)) calc(var(--pu)*174.4)),
   repeating-linear-gradient(90deg,#7e73632e 0 max(.5px,calc(var(--pu)*1.2)),transparent max(.5px,calc(var(--pu)*1.2)) calc(var(--pu)*171.43));
  background-size:auto;background-position:0 0,0 calc(var(--pu)*128),0 0}
-.paper-tile.p-month{--pu:.093}
+.paper-tile.p-month{--pu:.093px}
 .paper-chrome{position:absolute;inset:0;z-index:0;pointer-events:none}
 .paper-chrome span{position:absolute;top:50px;width:171.43px;text-align:center;font-family:'Noto Sans KR',sans-serif;font-size:25px;color:#8c8676;letter-spacing:2px}
 .paper-chrome .sun{color:#b2827a}.paper-chrome .sat{color:#7f8fa6}
@@ -329,3 +329,32 @@ body{background:radial-gradient(ellipse at 50% 22%,#f2f2f6,#e5e6ee)}
 .picker-grid .storage-note{grid-column:1/-1;margin:14px 0}
 .profile-picker .chips{margin-bottom:0}
 .profile-cover{position:relative}
+
+
+/* ───── 내지 다섯 가지 더 ───── */
+#paper.p-weekly,.feed-spread.p-weekly,.paper-tile.p-weekly{background-image:
+  repeating-linear-gradient(90deg,#7e736342 0 max(.5px,calc(var(--pu)*1.2)),transparent max(.5px,calc(var(--pu)*1.2)) calc(var(--pu)*300)),
+  repeating-linear-gradient(#7e736342 0 max(.5px,calc(var(--pu)*1.2)),transparent max(.5px,calc(var(--pu)*1.2)) calc(var(--pu)*500)),
+  repeating-linear-gradient(transparent 0 calc(var(--pu)*38),#7e736326 calc(var(--pu)*38) calc(calc(var(--pu)*38) + max(.5px,calc(var(--pu)*1.1))),transparent calc(calc(var(--pu)*38) + max(.5px,calc(var(--pu)*1.1))) calc(var(--pu)*500));
+ background-size:auto;background-position:0 0,0 0,0 0}
+#paper.p-todo,.feed-spread.p-todo,.paper-tile.p-todo{background-image:
+  radial-gradient(circle at calc(var(--pu)*40) 50%,transparent calc(var(--pu)*6.4),#7e736354 calc(var(--pu)*6.4),#7e736354 calc(var(--pu)*7.8),transparent calc(var(--pu)*7.8)),
+  repeating-linear-gradient(transparent 0 calc(var(--pu)*49),#7e736333 calc(var(--pu)*49) calc(var(--pu)*50));
+ background-size:calc(var(--pu)*600) calc(var(--pu)*50),auto;background-position:0 calc(var(--pu)*0),0 0}
+#paper.p-note,.feed-spread.p-note,.paper-tile.p-note{background-image:
+  linear-gradient(90deg,transparent 0 calc(var(--pu)*110),#b4806f6b calc(var(--pu)*110) calc(calc(var(--pu)*110) + max(.5px,calc(var(--pu)*1.4))),transparent calc(calc(var(--pu)*110) + max(.5px,calc(var(--pu)*1.4)))),
+  repeating-linear-gradient(transparent 0 calc(var(--pu)*39),#7e736338 calc(var(--pu)*39) calc(var(--pu)*40));
+ background-size:calc(var(--pu)*600) 100%,auto;background-position:0 0,0 0}
+#paper.p-staff,.feed-spread.p-staff,.paper-tile.p-staff{background-image:repeating-linear-gradient(#7e73634d calc(var(--pu)*0) max(calc(var(--pu)*0.5),calc(calc(var(--pu)*0) + .5px)),transparent max(calc(var(--pu)*0.5),calc(calc(var(--pu)*0) + .5px)) calc(var(--pu)*11),#7e73634d calc(var(--pu)*11) max(calc(var(--pu)*11.5),calc(calc(var(--pu)*11) + .5px)),transparent max(calc(var(--pu)*11.5),calc(calc(var(--pu)*11) + .5px)) calc(var(--pu)*22),#7e73634d calc(var(--pu)*22) max(calc(var(--pu)*22.5),calc(calc(var(--pu)*22) + .5px)),transparent max(calc(var(--pu)*22.5),calc(calc(var(--pu)*22) + .5px)) calc(var(--pu)*33),#7e73634d calc(var(--pu)*33) max(calc(var(--pu)*33.5),calc(calc(var(--pu)*33) + .5px)),transparent max(calc(var(--pu)*33.5),calc(calc(var(--pu)*33) + .5px)) calc(var(--pu)*44),#7e73634d calc(var(--pu)*44) max(calc(var(--pu)*44.5),calc(calc(var(--pu)*44) + .5px)),transparent max(calc(var(--pu)*44.5),calc(calc(var(--pu)*44) + .5px)) calc(var(--pu)*55),transparent calc(var(--pu)*55) calc(var(--pu)*110));
+ background-size:auto;background-position:0 calc(var(--pu)*60)}
+#paper.p-iso,.feed-spread.p-iso,.paper-tile.p-iso{background-image:
+  repeating-linear-gradient(60deg,#7e73632b 0 max(.5px,calc(var(--pu)*1)),transparent max(.5px,calc(var(--pu)*1)) calc(var(--pu)*39.3)),
+  repeating-linear-gradient(-60deg,#7e73632b 0 max(.5px,calc(var(--pu)*1)),transparent max(.5px,calc(var(--pu)*1)) calc(var(--pu)*39.3)),
+  repeating-linear-gradient(0deg,#7e73632b 0 max(.5px,calc(var(--pu)*1)),transparent max(.5px,calc(var(--pu)*1)) calc(var(--pu)*34));
+ background-size:auto}
+.paper-tile.p-weekly,.paper-tile.p-month{--pu:.093px}
+.paper-tile.p-note,.paper-tile.p-todo{--pu:.22px}
+
+/* 늘어난 스티커 팩 */
+.pack-foil{--sheet:url('assets/stickers-foil.png')}.pack-press{--sheet:url('assets/stickers-press.png')}.pack-stamp{--sheet:url('assets/stickers-stamp.png')}.pack-clay{--sheet:url('assets/stickers-clay.png')}
+.art.pack-foil,.art.pack-press,.art.pack-stamp,.art.pack-clay,.piece.sticker.pack-foil,.piece.sticker.pack-press,.piece.sticker.pack-stamp,.piece.sticker.pack-clay{mix-blend-mode:normal}

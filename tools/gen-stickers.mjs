@@ -54,6 +54,49 @@ const PACKS = {
       'Row 3: fountain pen, open book, teacup on saucer, round glasses. ' +
       'Row 4: crescent moon, small four-point star, outline heart, ribbon bow.',
   },
+  foil: {
+    file: 'stickers-foil.png',
+    prompt: GRID +
+      'Style: delicate GOLD FOIL LINE ART, single hairline stroke in warm metallic gold with a faint sheen, ' +
+      'no fills, no colour other than gold, elegant and airy, like hot-foil stamping on cream stationery. ' +
+      'Row 1: cat outline sitting, small bird, butterfly, fish. ' +
+      'Row 2: slender branch with leaves, single feather, olive leaf, one blossom. ' +
+      'Row 3: antique key, sealed envelope, teacup, open book. ' +
+      'Row 4: crescent moon, small constellation of three stars, heart outline, ribbon bow.',
+  },
+  press: {
+    file: 'stickers-press.png',
+    prompt: GRID +
+      'Style: PRESSED BOTANICAL SPECIMEN, real dried and flattened plants and insects as in a herbarium sheet, ' +
+      'slightly translucent petals, faded natural colours, fine visible veins, soft paper-dry texture, ' +
+      'photographic realism but flat and pressed, no shadows. ' +
+      'Row 1: pressed butterfly, dragonfly, ladybird, small snail shell. ' +
+      'Row 2: pressed pansy, baby breath sprig, four-leaf clover, fern frond. ' +
+      'Row 3: tea bag with paper tag, torn corner of a letter, length of thread, small button. ' +
+      'Row 4: dried rose, dried lavender, single feather, star-shaped maple leaf.',
+  },
+  stamp: {
+    file: 'stickers-stamp.png',
+    prompt: GRID +
+      'Style: VINTAGE POSTAGE STAMP and rubber ink stamp, perforated stamp edges, aged paper, ' +
+      'muted ink in indigo, brick red and sepia, slightly uneven inking as if hand-pressed, ' +
+      'small engraved linework, postal and stationery feeling. ' +
+      'Row 1: cat postage stamp, bird postage stamp, rabbit rubber stamp, fish rubber stamp. ' +
+      'Row 2: flower postage stamp, leaf rubber stamp, tree postage stamp, berry rubber stamp. ' +
+      'Row 3: round date postmark, airmail stamp, train postage stamp, coffee cup rubber stamp. ' +
+      'Row 4: heart rubber stamp, star postage stamp, moon rubber stamp, ribbon postage stamp.',
+  },
+  clay: {
+    file: 'stickers-clay.png',
+    prompt: GRID +
+      'Style: soft handmade FELT AND CLAY craft objects, chunky rounded shapes, visible wool fibre and ' +
+      'fingerprint clay texture, matte surface, gentle soft shadow, warm muted palette of oatmeal, ' +
+      'dusty rose, sage and butter yellow, handmade and cosy. ' +
+      'Row 1: felt bear, felt sheep, felt duckling, felt hedgehog. ' +
+      'Row 2: clay tulip, felt leaf, clay mushroom, clay acorn. ' +
+      'Row 3: clay mug, felt book, pair of socks, clay kettle. ' +
+      'Row 4: felt heart, clay star, felt cloud, felt rainbow.',
+  },
   jelly: {
     file: 'stickers-jelly.png',
     prompt: GRID +

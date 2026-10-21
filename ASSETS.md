@@ -31,11 +31,13 @@ image_gen 으로 만든 첫 시트. 프롬프트:
 
 > Create a square 1024x1024 sticker sprite atlas for a tasteful Korean diary decorating mobile app. Exactly 4 columns and 4 rows of equal square cells, no grid lines, pure white background. Each sticker centered in its cell, contained within central 70% of cell, generous blank whitespace margins. Delicate hand drawn thin navy graphite outlines, subtle watercolor in cream, dusty blue, soft pink, sage, muted gold. White die cut edge. No 3D emoji, no text. Row 1: tuxedo cat sitting, white rabbit with pink cheeks, pale gold five point star with little face, pink heart. Row 2: single yellow daisy with green leaves, tiny vintage blue camera, stem of pink tulips, white fluffy kitten. Row 3: iced coffee cup with straw, blue butterfly, crescent moon and tiny stars, green leafy sprig. Row 4: brown teddy bear with ribbon, blue airplane, small white envelope with heart seal, little blue gingham ribbon bow. Cohesive artisanal Korean stationery sticker collection, charming but refined.
 
-## dist/assets/stickers-{pixel,retro,ink,jelly}.png
+## dist/assets/stickers-{pixel,retro,ink,jelly,foil,press,stamp,clay}.png
 
-화풍이 다른 스티커 팩 4종(각 4×4=16개, 배경 투명). 프롬프트는 `tools/gen-stickers.mjs` 안에 있다.
+화풍이 다른 스티커 팩 8종(각 4×4=16개, 배경 투명). 손그림까지 아홉 화풍 144종. 프롬프트는 `tools/gen-stickers.mjs` 안에 있다.
 다시 구우려면 `node tools/gen-stickers.mjs [팩이름] [--force]`.
-retro·ink·jelly 는 768px 로 줄여 넣었고(원본은 `assets/src/`), 도트는 줄이면 픽셀이 뭉개져 1024 그대로다.
+도트를 뺀 나머지는 768px 로 줄여 넣었다(원본은 `assets/src/`). 도트는 줄이면 픽셀이 뭉개져 1024 그대로다.
+새 팩을 더할 때는 시트의 4×4 격자와 셀 경계 알파부터 재고(`moveTo` 없는 별처럼, 눈으로는 안 보인다),
+`app.js` 의 `PACKS` 와 `style.css` 의 `.pack-<id>{--sheet:...}` 한 줄씩을 더한다.
 
 ## dist/icons — 앱 아이콘
 

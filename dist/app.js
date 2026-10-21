@@ -8,10 +8,14 @@ const PACKS=[
 {id:'pixel',name:'도트',file:'assets/stickers-pixel.png',blend:'normal',cells:[['도트 고양이','동물'],['도트 강아지','동물'],['도트 병아리','동물'],['도트 개구리','동물'],['도트 튤립','꽃'],['도트 선인장','꽃'],['도트 해바라기','꽃'],['네잎클로버','꽃'],['플로피 디스크','일상'],['게임기','일상'],['컵라면','일상'],['자판기','일상'],['도트 하트','감성'],['도트 별','감성'],['말풍선','감성'],['무지개','감성']]},
 {id:'retro',name:'레트로',file:'assets/stickers-retro.png',blend:'normal',cells:[['호랑이','동물'],['오리','동물'],['판다','동물'],['꿀벌','동물'],['데이지','꽃'],['장미','꽃'],['야자수','꽃'],['레몬','꽃'],['카세트','일상'],['롤러스케이트','일상'],['소다','일상'],['전화기','일상'],['번개','감성'],['무지개','감성'],['스마일','감성'],['별똥별','감성']]},
 {id:'ink',name:'먹선',file:'assets/stickers-ink.png',blend:'normal',cells:[['고양이','동물'],['작은 새','동물'],['물고기','동물'],['토끼','동물'],['잎 줄기','꽃'],['유칼립투스','꽃'],['민들레','꽃'],['국화','꽃'],['만년필','일상'],['책','일상'],['찻잔','일상'],['안경','일상'],['초승달','감성'],['작은 별','감성'],['하트','감성'],['리본','감성']]},
-{id:'jelly',name:'젤리',file:'assets/stickers-jelly.png',blend:'normal',cells:[['젤리 고양이','동물'],['젤리 곰','동물'],['젤리 토끼','동물'],['젤리 오리','동물'],['젤리 꽃','꽃'],['젤리 잎','꽃'],['체리','꽃'],['복숭아','꽃'],['우유팩','일상'],['소프트콘','일상'],['사탕','일상'],['비누방울','일상'],['젤리 하트','감성'],['젤리 별','감성'],['작은 구름','감성'],['물방울','감성']]}];
+{id:'jelly',name:'젤리',file:'assets/stickers-jelly.png',blend:'normal',cells:[['젤리 고양이','동물'],['젤리 곰','동물'],['젤리 토끼','동물'],['젤리 오리','동물'],['젤리 꽃','꽃'],['젤리 잎','꽃'],['체리','꽃'],['복숭아','꽃'],['우유팩','일상'],['소프트콘','일상'],['사탕','일상'],['비누방울','일상'],['젤리 하트','감성'],['젤리 별','감성'],['작은 구름','감성'],['물방울','감성']]},
+{id:'foil',name:'금박',file:'assets/stickers-foil.png',blend:'normal',cells:[['고양이','동물'],['작은 새','동물'],['나비','동물'],['물고기','동물'],['나뭇가지','꽃'],['깃털','꽃'],['잎','꽃'],['꽃 한 송이','꽃'],['열쇠','일상'],['편지','일상'],['찻잔','일상'],['책','일상'],['초승달','감성'],['별자리','감성'],['하트','감성'],['리본','감성']]},
+{id:'press',name:'압화',file:'assets/stickers-press.png',blend:'normal',cells:[['나비 표본','동물'],['잠자리','동물'],['무당벌레','동물'],['달팽이','동물'],['팬지','꽃'],['안개꽃','꽃'],['네잎클로버','꽃'],['고사리','꽃'],['티백','일상'],['편지 조각','일상'],['실','일상'],['단추','일상'],['마른 장미','감성'],['라벤더','감성'],['깃털','감성'],['단풍잎','감성']]},
+{id:'stamp',name:'도장',file:'assets/stickers-stamp.png',blend:'normal',cells:[['고양이 우표','동물'],['새 우표','동물'],['토끼 도장','동물'],['물고기 도장','동물'],['꽃 우표','꽃'],['잎 도장','꽃'],['나무 우표','꽃'],['열매 도장','꽃'],['소인','일상'],['항공 우표','일상'],['기차 우표','일상'],['커피 도장','일상'],['하트 도장','감성'],['별 우표','감성'],['달 도장','감성'],['리본 우표','감성']]},
+{id:'clay',name:'펠트',file:'assets/stickers-clay.png',blend:'normal',cells:[['곰','동물'],['양','동물'],['오리','동물'],['고슴도치','동물'],['튤립','꽃'],['잎','꽃'],['버섯','꽃'],['도토리','꽃'],['머그','일상'],['책','일상'],['양말','일상'],['주전자','일상'],['하트','감성'],['별','감성'],['구름','감성'],['무지개','감성']]}];
 const PACK_BY_ID=Object.fromEntries(PACKS.map(p=>[p.id,p]));
 const stickers=PACKS[0].cells.map((c,i)=>[c[0],c[1],i]);
-const PAPERS=[['plain','무지'],['ruled','줄글'],['dot','땡땡이'],['grid','모눈'],['graph','작은 모눈'],['dash','사선'],['month','월간 플래너']];
+const PAPERS=[['plain','무지'],['ruled','줄글'],['dot','땡땡이'],['grid','모눈'],['month','월간 플래너'],['weekly','주간 플래너'],['todo','체크리스트'],['note','공책'],['staff','오선지'],['graph','작은 모눈'],['dash','사선'],['iso','삼각 격자']];
 const WEEKDAYS=['일','월','화','수','목','금','토'];
 const PAPER_COLORS=['#fffdf7','#fdf4e9','#f6f3ea','#edf2f9','#f8eff1','#eef4ee','#e8ebf4','#ffffff'];
 let customStickers;try{customStickers=JSON.parse(localStorage.getItem('diaru-stickers-v1'))}catch{}if(!Array.isArray(customStickers))customStickers=[];
@@ -26,7 +30,7 @@ const CLOTH=['#f1ece0','#dee5d9','#d8e1ed','#efe4d4'];
 const shortDate=s=>{const m=/^(\d{4})\.(\d{2})\.(\d{2})$/.exec(s||'');if(!m)return s||'';return m[2]+'.'+m[3]+' ('+'일월화수목금토'[new Date(+m[1],+m[2]-1,+m[3]).getDay()]+')'};
 function renderDiaries(filter='전체'){['#home-diaries','#all-diaries','#profile-diaries'].forEach(target=>{const root=$(target);root.replaceChildren();let list=target==='#all-diaries'?diaries.filter(d=>filter==='전체'||d.subtitle===filter):diaries.slice(0,3);list.forEach((d,n)=>{const card=el('button','diary-card'),cover=el('div','cover'),img=el('img');const coverPhoto=d.items?.find(i=>i.type==='photo')?.content||(d.image?photos[d.image]:null);cover.style.setProperty('--cloth',CLOTH[n%CLOTH.length]);if(coverPhoto){img.src=coverPhoto;img.alt=d.title;cover.append(img)}else cover.classList.add('empty-cover');cover.append(art(n%4?11:4,'sprig'),el('span','cover-label',d.title),el('span','cover-spark','✧'));card.append(cover,el('p','',shortDate(d.date)),el('h3','',target==='#home-diaries'?(d.subtitle||d.title):d.title));card.onclick=()=>openEditor(d);root.append(card)});if(target!=='#profile-diaries'){const add=el('button','blank');add.setAttribute('aria-label','새 다이어리 만들기');add.append(el('b','','＋'),el('span','','새로운 기록'));add.onclick=()=>openEditor();root.append(add)}});$('#diary-total').textContent=diaries.length;$('#profile-count').textContent=diaries.length;renderFeed()}
 $$('.diary-chips button').forEach(b=>b.onclick=()=>{$$('.diary-chips button').forEach(c=>c.classList.toggle('selected',c===b));renderDiaries(b.textContent)});
-let category='전체',stickerPack='전체';
+let category='전체',stickerPack='손그림'; // 처음엔 한 팩만 — '전체'를 누르면 시트 아홉 장을 한꺼번에 받는다
 function uploadTile(label){const b=el('button','add-sticker');b.append(el('b','','＋'));if(label)b.append(el('small','',label));b.setAttribute('aria-label','사진으로 내 스티커 만들기');b.onclick=()=>$('#sticker-input').click();return b}
 function renderStickers(){const q=$('#sticker-search').value.trim(),grid=$('#sticker-grid');grid.replaceChildren();grid.append(uploadTile('사진 올리기'));
 const mine=(stickerPack==='전체'||stickerPack==='내 스티커')?customStickers.filter(s=>!q||(s.name||'').includes(q)):[];
@@ -36,7 +40,7 @@ list.forEach(s=>{const b=el('button');b.setAttribute('aria-label',s.pack.name+' 
 $('#sticker-count').textContent=(PACKS.length*16+customStickers.length)+' STICKERS';
 $('#sticker-heading').textContent=stickerPack==='전체'?'화풍별 스티커':stickerPack;
 if(!list.length&&!mine.length)grid.append(el('p','storage-note','검색 결과가 없어요.'))}
-['전체',...PACKS.map(p=>p.name),'내 스티커'].forEach(c=>{const b=el('button',c==='전체'?'selected':'',c);b.onclick=()=>{stickerPack=c;$$('#sticker-packs button').forEach(x=>x.classList.toggle('selected',x===b));renderStickers()};$('#sticker-packs').append(b)});
+['전체',...PACKS.map(p=>p.name),'내 스티커'].forEach(c=>{const b=el('button',c===stickerPack?'selected':'',c);b.onclick=()=>{stickerPack=c;$$('#sticker-packs button').forEach(x=>x.classList.toggle('selected',x===b));renderStickers()};$('#sticker-packs').append(b)});
 ['전체','동물','꽃','일상','감성'].forEach(c=>{const b=el('button',c==='전체'?'selected':'',c);b.onclick=()=>{category=c;$$('#sticker-categories button').forEach(x=>x.classList.toggle('selected',x===b));renderStickers()};$('#sticker-categories').append(b)});$('#sticker-search').oninput=renderStickers;
 $('#sticker-input').onchange=e=>{const file=e.target.files[0];e.target.value='';if(!file)return;if(!file.type.startsWith('image/')){toast('이미지 파일을 선택해주세요.');return}const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas'),r=Math.min(1,360/Math.max(img.width,img.height));c.width=Math.round(img.width*r)||1;c.height=Math.round(img.height*r)||1;c.getContext('2d').drawImage(img,0,0,c.width,c.height);const src=c.toDataURL('image/png'),name=((file.name||'').replace(/\.[^.]+$/,'').slice(0,12)||'내 스티커');const s={id:'cs-'+Date.now().toString(36),name,src},prev=customStickers;customStickers=[s,...customStickers].slice(0,30);if(!saveCustom()){customStickers=prev;return}renderStickers();renderEditorStickers();if($('#editor').classList.contains('hidden'))toast('내 스티커에 담았어요.');else{placePiece({type:'sticker',src,content:name,x:140+Math.random()*260,y:200+Math.random()*300});$('#editor-drawer').classList.add('hidden');toast('내 스티커를 붙였어요.')}};img.onerror=()=>toast('JPG 또는 PNG 사진으로 다시 시도해주세요.');img.src=reader.result};reader.readAsDataURL(file)};
 let drawerPack='hand';
@@ -86,6 +90,21 @@ const PATTERN={
   g.fillStyle='rgba(126,115,99,.18)';for(let i=1;i<7;i++)g.fillRect(col*i,0,1.2,H);
   g.save();g.textAlign='center';g.textBaseline='middle';g.font='25px "Noto Sans KR", sans-serif';
   WEEKDAYS.forEach((w,i)=>{g.fillStyle=i===0?'#b2827a':i===6?'#7f8fa6':'#8c8676';g.fillText(w,col*(i+.5),head/2)});g.restore()},
+ weekly:(g,W,H)=>{const col=W/4,row=H/2;
+  g.fillStyle='rgba(126,115,99,.26)';for(let i=1;i<4;i++)g.fillRect(col*i,0,1.2,H);g.fillRect(0,row,W,1.2);
+  g.fillStyle='rgba(126,115,99,.15)';for(let r=0;r<2;r++)for(let i=0;i<4;i++)g.fillRect(col*i,row*r+38,col,1.1)},
+ todo:(g,W,H)=>{g.fillStyle='rgba(126,115,99,.2)';for(let y=50;y<H;y+=50)g.fillRect(0,y,W,1.1);
+  g.strokeStyle='rgba(126,115,99,.33)';g.lineWidth=1.4;
+  for(let y=25;y<H;y+=50)for(const x of [40,640]){g.beginPath();g.arc(x,y,7.5,0,7);g.stroke()}},
+ note:(g,W,H)=>{g.fillStyle='rgba(126,115,99,.22)';for(let y=40;y<H;y+=40)g.fillRect(0,y,W,1.1);
+  g.fillStyle='rgba(180,128,111,.42)';for(const x of [110,710])g.fillRect(x,0,1.4,H)},
+ staff:(g,W,H)=>{g.fillStyle='rgba(126,115,99,.3)';
+  for(let top=60;top+45<H;top+=110)for(let i=0;i<5;i++)g.fillRect(0,top+i*11,W,1.1)},
+ iso:(g,W,H)=>{g.strokeStyle='rgba(126,115,99,.17)';g.lineWidth=1;
+  for(let y=0;y<H;y+=34){g.beginPath();g.moveTo(0,y);g.lineTo(W,y);g.stroke()}
+  const step=34/Math.cos(Math.PI/6);
+  for(let d=-H*2;d<W+H*2;d+=step){g.beginPath();g.moveTo(d,0);g.lineTo(d+H/Math.tan(Math.PI/3),H);g.stroke();
+   g.beginPath();g.moveTo(d,0);g.lineTo(d-H/Math.tan(Math.PI/3),H);g.stroke()}},
  dash:(g,W,H)=>{g.strokeStyle='rgba(126,115,99,.17)';g.lineWidth=1.3;for(let d=-H;d<W+H;d+=15){g.beginPath();g.moveTo(d,H);g.lineTo(d+H,0);g.stroke()}}};
 const sheetCache={};
 function loadImage(src){return new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=src})}
@@ -300,7 +319,7 @@ $('#share-scope').onclick=()=>{const next=$('#share-scope').getAttribute('aria-p
 
 /* 속지 둘러보기 — 고르면 그 속지로 새 기록이 열린다. 견본이 아니라 도구다. */
 function renderPapers(){['#home-papers','#shop-papers'].forEach(sel=>{const root=$(sel);if(!root)return;root.replaceChildren();
- PAPERS.forEach(([id,name])=>{const b=el('button','paper-pick-card');b.setAttribute('aria-label',name+' 속지로 시작하기');
+ (sel==='#home-papers'?PAPERS.slice(0,6):PAPERS).forEach(([id,name])=>{const b=el('button','paper-pick-card');b.setAttribute('aria-label',name+' 속지로 시작하기');
   b.append(el('i','paper-tile paper-surface p-'+id),el('h3','',name));
   b.onclick=()=>{openEditor();applyPaper(id);dirty=true;toast(name+' 속지로 시작해요.')};root.append(b)})});
  if($('#paper-sku'))$('#paper-sku').textContent=PAPERS.length+' PAPERS'}
