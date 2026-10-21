@@ -316,18 +316,6 @@ body{background:radial-gradient(ellipse at 50% 22%,#f2f2f6,#e5e6ee)}
 #profile.editing .profile-lock{opacity:.5}
 .profile-edit{display:block;width:auto;margin:0 auto 20px;padding:9px 18px;border:1px solid var(--line);border-radius:20px;background:#fff;font-size:10px;color:#6d7a90}
 #profile.editing .profile-edit{background:var(--navy);color:#fff;border-color:var(--navy)}
-.profile-picker{margin:0 0 22px;padding:13px;border:1px solid var(--line);border-radius:14px;background:var(--ivory-2)}
-.picker-row{display:flex;gap:8px;overflow:auto;scrollbar-width:none;padding-bottom:2px}
-.picker-row::-webkit-scrollbar{display:none}
-.picker-row>button{flex-shrink:0;width:78px;height:56px;border-radius:9px;overflow:hidden;border:1px solid #e3ded2;background:#fff;display:grid;place-items:center}
-.picker-row>button.on{box-shadow:0 0 0 2px var(--navy)}
-.picker-row img{width:100%;height:100%;object-fit:cover}
-.picker-add{color:#8b97a9;font-size:20px;border-style:dashed!important}
-.picker-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:10px;max-height:168px;overflow:auto;scrollbar-width:none}
-.picker-grid>button{aspect-ratio:1;border:1px solid var(--line);border-radius:9px;background:#fff;display:grid;place-items:center}
-.picker-grid .art,.picker-grid .custom-art{width:84%;height:84%;object-fit:contain}
-.picker-grid .storage-note{grid-column:1/-1;margin:14px 0}
-.profile-picker .chips{margin-bottom:0}
 .profile-cover{position:relative}
 
 
@@ -401,6 +389,5 @@ body{background:radial-gradient(ellipse at 50% 22%,#f2f2f6,#e5e6ee)}
 #person .section-title{margin-top:8px}
 #person .diary-grid{grid-template-columns:1fr;gap:14px}
 .custom-art.photo{object-fit:cover;border-radius:50%}
-.picker-grid .picker-add{font-size:20px;color:#8b97a9}
 #person .profile-handle:after{content:none}
 #person .profile-portrait img{width:67px;height:67px;object-fit:cover;border-radius:50%}

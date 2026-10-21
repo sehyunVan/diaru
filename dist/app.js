@@ -385,14 +385,13 @@ function renderProfile(){$('#profile-handle-edit').textContent='@'+me.handle;
 function sealNode(){const s=me.seal;
  if(typeof s?.src==='string'&&s.src.startsWith('data:')){const i=el('img','custom-art'+(s.fit==='cover'?' photo':''));i.src=s.src;i.alt='';return i}
  const pack=PACK_BY_ID[s?.pack]||PACKS[0];return art(Number.isInteger(s?.sprite)?s.sprite:0,'',pack.id)}
-const COVER_CHOICES=['harbor','dusk','clouds','forest','garden','lanterns','sky','street','cat'];
-let editingProfile=false,sealPack='hand';
+let editingProfile=false;
 function setProfileEditing(on){editingProfile=on;
  $('#profile').classList.toggle('editing',on);
  $('#profile-edit-toggle').textContent=on?'편집 끝내기':'프로필 편집';
  if(on){$('#profile-name-input').value=$('.profile-detail h1').textContent;
   $('#profile-handle-input').value=me.handle;$('#profile-bio-input').value=me.bio}
- else{$('#profile-picker').classList.add('hidden');commitProfile()}}
+ else commitProfile()}
 function commitProfile(){const name=$('#profile-name-input').value.trim().slice(0,40);
  if(name){$('.profile-detail h1').textContent=name;try{localStorage.setItem('diaru-profile-name',name)}catch{}}
  me.bio=$('#profile-bio-input').value.trim().slice(0,60);
@@ -402,31 +401,9 @@ function commitProfile(){const name=$('#profile-name-input').value.trim().slice(
   else if(RESERVED.includes(hd)||personBy(hd))toast('이미 쓰이고 있는 아이디예요.');
   else{me.handle=hd;toast('이제 @'+hd+' 예요.')}}
  saveMe();renderProfile()}
-function openPicker(kind){const box=$('#profile-picker');
- if(!box.classList.contains('hidden')&&box.dataset.kind===kind){box.classList.add('hidden');return}
- box.dataset.kind=kind;box.classList.remove('hidden');
- kind==='cover'?renderCoverPicker(box):renderSealPicker(box)}
-function renderCoverPicker(box){box.replaceChildren();const row=el('div','picker-row');
- const up=el('button','picker-add','＋');up.setAttribute('aria-label','사진 올려서 배경 만들기');up.onclick=()=>$('#cover-input').click();row.append(up);
- if(me.cover.startsWith('data:')){const b=el('button','on'),i=el('img');i.src=me.cover;i.alt='';b.append(i);row.append(b)}
- COVER_CHOICES.forEach(k=>{const b=el('button',me.cover===k?'on':''),i=el('img');i.src=photos[k];i.alt='';b.append(i);
-  b.onclick=()=>{me.cover=k;saveMe();renderProfile();renderCoverPicker(box)};row.append(b)});
- box.append(row)}
-function renderSealPicker(box){box.replaceChildren();const chips=el('div','chips drawer-packs');
- [...PACKS.map(p=>[p.id,p.name]),['mine','내 것']].forEach(([id,name])=>{const b=el('button',id===sealPack?'selected':'',name);
-  b.onclick=()=>{sealPack=id;renderSealPicker(box)};chips.append(b)});
- const grid=el('div','picker-grid');
- const up=el('button','picker-add','＋');up.setAttribute('aria-label','사진으로 인장 만들기');
- up.onclick=()=>$('#seal-input').click();grid.append(up);
- if(sealPack==='mine'){if(!customStickers.length)grid.append(el('p','storage-note','편집기에서 사진을 스티커로 만들면 여기에 떠요.'));
-  customStickers.forEach(s=>{const b=el('button');b.setAttribute('aria-label',(s.name||'내 스티커')+' 인장으로');b.append(customArt(s));
-   b.onclick=()=>{me.seal={src:s.src};saveMe();renderProfile()};grid.append(b)})}
- else{const pack=PACK_BY_ID[sealPack]||PACKS[0];pack.cells.forEach((cell,i)=>{const b=el('button');b.setAttribute('aria-label',cell[0]+' 인장으로');
-   b.append(art(i,'',pack.id));b.onclick=()=>{me.seal={pack:pack.id,sprite:i};saveMe();renderProfile()};grid.append(b)})}
- box.append(chips,grid)}
 $('#profile-edit-toggle').onclick=()=>setProfileEditing(!editingProfile);
-$('#profile-seal').onclick=()=>{if(editingProfile)openPicker('seal');else setProfileEditing(true)};
-$('.profile-cover').onclick=()=>{if(editingProfile)openPicker('cover')};
+$('#profile-seal').onclick=()=>{if(editingProfile)$('#seal-input').click();else setProfileEditing(true)};
+$('.profile-cover').onclick=()=>{if(editingProfile)$('#cover-input').click()};
 $('#seal-input').onchange=e=>{const file=e.target.files[0];e.target.value='';if(!file)return;
  if(!file.type.startsWith('image/'))return toast('이미지 파일을 선택해주세요.');
  const reader=new FileReader();reader.onload=()=>{const img=new Image();
@@ -435,7 +412,7 @@ $('#seal-input').onchange=e=>{const file=e.target.files[0];e.target.value='';if(
    g.drawImage(img,(img.width-sw)/2,(img.height-sh)/2,sw,sh,0,0,S,S);
    const prev=me.seal;me.seal={src:c.toDataURL('image/jpeg',.85),fit:'cover'};
    try{localStorage.setItem('diaru-me',JSON.stringify(me))}catch{me.seal=prev;return toast('사진이 너무 커요. 다른 사진으로 해주세요.')}
-   renderProfile();renderSealPicker($('#profile-picker'));toast('인장을 바꿨어요.')};
+   renderProfile();toast('인장을 바꿨어요.')};
   img.onerror=()=>toast('JPG 또는 PNG 사진으로 다시 시도해주세요.');img.src=reader.result};
  reader.readAsDataURL(file)};
 $('#cover-input').onchange=e=>{const file=e.target.files[0];e.target.value='';if(!file)return;
@@ -446,7 +423,7 @@ $('#cover-input').onchange=e=>{const file=e.target.files[0];e.target.value='';if
    g.drawImage(img,(img.width-sw)/2,(img.height-sh)/2,sw,sh,0,0,1000,750);
    const prev=me.cover;me.cover=c.toDataURL('image/jpeg',.8);
    try{localStorage.setItem('diaru-me',JSON.stringify(me))}catch{me.cover=prev;return toast('사진이 너무 커요. 다른 사진으로 해주세요.')}
-   renderProfile();renderCoverPicker($('#profile-picker'));toast('배경화면을 바꿨어요.')};
+   renderProfile();toast('배경화면을 바꿨어요.')};
   img.onerror=()=>toast('JPG 또는 PNG 사진으로 다시 시도해주세요.');img.src=reader.result};
  reader.readAsDataURL(file)};
 saveMe();saveSocial();
