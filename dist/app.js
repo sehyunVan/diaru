@@ -370,7 +370,7 @@ $('#export').onclick=async()=>{const button=$('#export');button.disabled=true;to
   toast('이미지로 저장했어요. ('+(blob.size/1024/1024).toFixed(1)+'MB)')}
  catch{toast('이미지를 만들지 못했어요. 사진을 다시 불러오고 시도해주세요.')}
  finally{button.disabled=false}};
-$('#profile-name-edit').onclick=()=>setProfileEditing(true);$('#profile-bio-edit').onclick=()=>setProfileEditing(true);$('#profile-handle-edit').onclick=()=>setProfileEditing(true);try{const name=localStorage.getItem('diaru-profile-name');if(name)$('.profile-detail h1').textContent=name}catch{}
+$('#profile-name-edit').onclick=()=>setProfileEditing(true);$('#profile-bio-edit').onclick=()=>setProfileEditing(true);$('#profile-handle-edit').onclick=()=>setProfileEditing(true);
 let feedMode='mine',activity=[];try{activity=JSON.parse(localStorage.getItem('diaru-activity'))||[]}catch{}
 /* 펼친 책 한 장 — 피드·나의 기록·남의 프로필이 같은 그림을 쓴다 */
 function spreadPreview(d){const preview=el('div','feed-spread paper-surface');preview.style.backgroundColor=d.background||'#fffdf7';if(d.paper&&d.paper!=='plain')preview.classList.add('p-'+d.paper);const mini=chromeNode(d.paper,true);if(mini)preview.append(mini);const surface=el('div','feed-surface');(d.items||[]).forEach(item=>{const p=el('div','feed-piece '+item.type);p.dataset.type=item.type;p.style.left=item.x/12+'%';p.style.top=item.y/10+'%';applyPieceStyle(p,{...item});if(item.type==='photo'){const img=el('img');img.src=item.content;img.alt='';p.style.width=(item.w||220)/12+'%';p.style.height=(item.h||190)/10+'%';p.append(img)}else if(item.type==='ink'){p.style.width=(item.w||100)/12+'%';p.style.height=(item.h||100)/10+'%';
@@ -391,10 +391,10 @@ const HANDLE_RE=/^[a-z0-9_]{3,15}$/;
 let me,meSaved=false;try{const raw=localStorage.getItem('diaru-me');meSaved=!!raw;me=JSON.parse(raw)}catch{}
 if(!me||typeof me!=='object')me={};
 if(!HANDLE_RE.test(me.handle||''))me.handle='diaru_'+Math.random().toString(36).slice(2,7);
-if(typeof me.bio!=='string')me.bio='오늘도 예쁜 하루를 모으는 중';
+if(typeof me.bio!=='string')me.bio='';
 if(typeof me.onboarded!=='boolean')me.onboarded=meSaved; /* 쓰던 기기면 이미 거친 것으로 본다 */
-if(typeof me.cover!=='string')me.cover='harbor';
-if(!me.seal||typeof me.seal!=='object')me.seal={pack:'hand',sprite:0};
+if(typeof me.cover!=='string')me.cover=null;
+if(me.seal!==null&&typeof me.seal!=='object')me.seal=null;
 let social;try{social=JSON.parse(localStorage.getItem('diaru-social'))}catch{}
 if(!social||typeof social!=='object')social={};
 social.friends=Array.isArray(social.friends)?social.friends:[];
@@ -536,16 +536,25 @@ function renderPerson(hd){const p=personBy(hd),page=$('#person');if(!p||!page)re
   page.append(empty)}}
 
 function renderProfile(){$('#profile-handle-edit').textContent='@'+me.handle;
- $('.profile-bio p').textContent=me.bio;
- $('#cover-img').src=me.cover.startsWith('data:')?me.cover:(photos[me.cover]||photos.harbor);
+ const cover=me.cover&&(me.cover.startsWith('data:')?me.cover:photos[me.cover]);
+ $('.profile-cover').classList.toggle('empty',!cover);
+ if(cover)$('#cover-img').src=cover;else $('#cover-img').removeAttribute('src');
  $('#profile-seal').replaceChildren(sealNode(),el('span','edit-badge','✎'));
  $('.profile-avatar').replaceChildren(sealNode());
+ $('.landing-avatar')?.replaceChildren(sealNode());
+ let name='';try{name=localStorage.getItem('diaru-profile-name')||''}catch{}
+ $('.profile-detail h1').textContent=name;
+ $('.profile-detail').classList.toggle('no-name',!name);
+ $('.profile-bio p').textContent=me.bio;
+ $('.profile-bio').classList.toggle('empty',!me.bio);
+ document.documentElement.classList.toggle('no-account',!me.onboarded);
  $('#profile-friends').textContent=social.friends.filter(hd=>!isBlocked(hd)).length;
  $('#profile-requests').textContent=PEOPLE.filter(p=>isIncoming(p.handle)).length}
 /* 프로필 편집란 — 배경화면 · 인장 · 이름 · 아이디 · 소개를 그 자리에서 고친다. */
 function sealNode(){const s=me.seal;
  if(typeof s?.src==='string'&&s.src.startsWith('data:')){const i=el('img','custom-art'+(s.fit==='cover'?' photo':''));i.src=s.src;i.alt='';return i}
- const pack=PACK_BY_ID[s?.pack]||PACKS[0];return art(Number.isInteger(s?.sprite)?s.sprite:0,'',pack.id)}
+ if(s&&PACK_BY_ID[s.pack])return art(Number.isInteger(s.sprite)?s.sprite:0,'',s.pack);
+ return el('span','seal-empty')}   /* 아직 안 고른 인장 — 빈 자리로 둔다 */
 let editingProfile=false;
 function setProfileEditing(on){editingProfile=on;
  $('#profile').classList.toggle('editing',on);
@@ -621,12 +630,10 @@ function adoptAccount(acc){
     갓 만든 계정이면(아직 가입 중) 비어 있으니 기기 값을 그대로 둔다. */
  const settled=!!acc.onboarded;
  me.handle=acc.handle||me.handle;me.onboarded=settled;
- const name=settled?(acc.name||'my little diary ♡'):acc.name;
- if(name){try{localStorage.setItem('diaru-profile-name',name)}catch{}
-  const h1=$('.profile-detail h1');if(h1)h1.textContent=name}
- if(settled||acc.bio)me.bio=typeof acc.bio==='string'&&acc.bio?acc.bio:'오늘도 예쁜 하루를 모으는 중';
- if(settled||acc.seal)me.seal=acc.seal||{pack:'hand',sprite:0};
- if(settled||acc.cover)me.cover=acc.cover||'harbor';
+ if(settled||acc.name){try{localStorage.setItem('diaru-profile-name',acc.name||'')}catch{}}
+ if(settled||acc.bio)me.bio=typeof acc.bio==='string'?acc.bio:'';
+ if(settled||acc.seal)me.seal=acc.seal||null;
+ if(settled||acc.cover)me.cover=acc.cover||null;
  saveMe();renderProfile();$('#profile-logout').classList.remove('hidden')}
 async function pushProfile(patch){if(!API.on||!API.token)return;
  try{await api('PATCH','api/me',patch)}catch(e){toast(e.message)}}
@@ -646,7 +653,7 @@ function renderAuthPreview(){const seal=$('#auth-seal');if(!seal)return;
  const img=$('#auth-cover-img'),has=typeof me.cover==='string'&&me.cover.startsWith('data:');
  img.src=has?me.cover:(photos[me.cover]||photos.harbor);
  $('#auth-cover').classList.toggle('filled',has)}
-function startAuth(){$('#landing').classList.add('hidden');$('#auth').classList.remove('hidden');
+function startAuth(){$('#landing').classList.add('hidden');$('#auth').classList.remove('hidden');$('#auth').inert=false;
  $$('.app > :not(#landing):not(#auth)').forEach(e=>e.inert=true);
  if(API.on){showAuthStep('auth-email');$('#auth-email-input').value=API.email;
   setTimeout(()=>$('#auth-email-input').focus(),60);return}
