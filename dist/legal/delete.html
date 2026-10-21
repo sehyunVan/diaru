@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Diaru 계정 삭제</title>
+<meta name="description" content="Diaru 계정과 서버에 저장된 기록을 지웁니다. 앱을 이미 지웠어도 여기서 바로 지울 수 있습니다.">
+<!-- 구글 플레이가 **앱 밖에서 열리는 주소**로 요구하는 문서다(앱을 이미 지운 사람도
+     지울 수 있어야 한다). 앱 안의 경로도 같이 적는다 — 애플은 그쪽을 본다.
+     여기서는 메일로 요청만 받지 않고 **그 자리에서 지운다**: 로그인이 이미
+     메일 여섯 자리 코드라, 같은 길을 그대로 쓰면 사람이 기다릴 이유가 없다. -->
+<style>
+:root{--ink:#2d3c50;--muted:#777d83;--ivory:#fdfaf4;--paper:#fffefa;--line:#e8e5de;--danger:#a4545d}
+*{box-sizing:border-box;margin:0}
+body{background:var(--ivory);color:var(--ink);font-family:'Noto Sans KR',system-ui,-apple-system,sans-serif;
+  line-height:1.75;padding:48px 20px 90px}
+main{max-width:640px;margin:0 auto}
+h1{font-size:26px;letter-spacing:-.4px;margin-bottom:6px}
+.sub{color:var(--muted);font-size:13px;margin-bottom:34px}
+h2{font-size:16px;margin:34px 0 10px;padding-top:18px;border-top:1px solid var(--line)}
+p,li,td,th{font-size:14px;color:#3f4d60}
+ol,ul{padding-left:20px;margin:8px 0}
+li{margin:4px 0}
+b{color:var(--ink)}
+a{color:#4d5c6d}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:20px;margin:16px 0}
+label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+input{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;
+  font:inherit;font-size:15px;color:var(--ink)}
+input:focus{outline:2px solid #c9d2dd;outline-offset:1px}
+button{margin-top:12px;width:100%;padding:14px;border:0;border-radius:12px;background:var(--ink);color:#fdfaf4;
+  font:inherit;font-size:15px;font-weight:600;cursor:pointer}
+button.danger{background:var(--danger)}
+button[disabled]{opacity:.45;cursor:default}
+.msg{margin-top:12px;font-size:13px;min-height:19px}
+.msg.bad{color:var(--danger)}
+.msg.good{color:#4f6b52}
+.hide{display:none}
+table{width:100%;border-collapse:collapse;margin:10px 0}
+th,td{text-align:left;padding:9px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:500;width:38%}
+footer{margin-top:42px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<main>
+<h1>계정 삭제</h1>
+<p class="sub">Diaru · 마지막 고침 2026년 10월 21일</p>
+
+<p>앱 안에서는 <b>마이 → 프로필 편집 → 계정 삭제</b> 가 가장 빠릅니다.
+앱을 이미 지웠거나 들어갈 수 없다면, <b>여기서 바로</b> 지울 수 있습니다.</p>
+
+<h2>여기서 지우기</h2>
+<p>가입에 쓴 메일로 여섯 자리 코드를 보냅니다. 그 코드를 넣으면 <b>그 자리에서</b> 지워집니다.</p>
+
+<div class="card">
+  <div id="step-email">
+    <label for="email">가입에 쓴 메일 주소</label>
+    <input id="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com">
+    <button id="send">코드 받기</button>
+  </div>
+
+  <div id="step-code" class="hide">
+    <label for="code">메일로 온 여섯 자리 코드</label>
+    <input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000">
+    <button id="wipe" class="danger">계정을 영구히 지웁니다</button>
+  </div>
+
+  <p id="msg" class="msg" role="status"></p>
+</div>
+
+<h2>무엇이 지워지나</h2>
+<table>
+  <tr><th>지워지는 것</th><td>계정과 @아이디 · 이름과 소개 · 인장과 머리 그림 ·
+    <b>모든 다이어리와 거기 넣은 사진</b> · 친구 관계와 주고받은 신청 · 남긴 마음과 댓글 · 로그인 세션</td></tr>
+  <tr><th>남는 것</th><td>이 기기에 내려받아 둔 이미지 · 남이 자기 기록에 적은 글 ·
+    신고 기록의 사유와 대상(남은 사람을 지키기 위해, 누가 신고했는지는 지웁니다)</td></tr>
+</table>
+<p><b>되돌릴 수 없습니다.</b> 같은 메일로 다시 가입하면 아무것도 없는 새 계정이 됩니다.
+쓰던 @아이디는 다시 비어서 다른 사람이 가져갈 수 있습니다.</p>
+<p>남기고 싶은 펼침면이 있다면 지우기 전에 앱에서 <b>이미지로 저장</b>해 두세요.</p>
+
+<h2>잘 안 되면</h2>
+<p>코드가 오지 않으면 스팸함을 봐 주세요(보내는 주소는 <b>no-reply@copycat.sarl</b>).
+코드는 10분 동안만 쓸 수 있습니다. 그래도 막히면 <b>support@copycat.sarl</b> 로
+가입에 쓴 메일 주소에서 보내 주시면 확인하고 지워 드립니다(영업일 기준 7일 안에).</p>
+
+<footer>Diaru · <a href="privacy.html">개인정보처리방침</a> · <a href="support.html">지원</a></footer>
+</main>
+
+<script>
+/* 앱과 같은 길을 쓴다 — 코드 받기, 코드 확인, 그리고 DELETE /api/me.
+   이 페이지는 서버와 같은 출처에 있으므로 상대경로가 맞다. */
+const $ = s => document.querySelector(s);
+const msg = (text, kind) => { const m = $('#msg'); m.textContent = text; m.className = 'msg' + (kind ? ' ' + kind : ''); };
+let email = '', token = '';
+
+async function call(method, path, body, bearer) {
+  const r = await fetch(path, {
+    method,
+    headers: { 'Content-Type': 'application/json', ...(bearer ? { Authorization: 'Bearer ' + bearer } : {}) },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const json = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(json.error || '서버가 응답하지 않아요.');
+  return json;
+}
+
+$('#send').onclick = async () => {
+  email = $('#email').value.trim().toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return msg('메일 주소를 다시 봐 주세요.', 'bad');
+  $('#send').disabled = true; msg('보내는 중…');
+  try {
+    await call('POST', '../api/auth/request', { email });
+    $('#step-email').classList.add('hide');
+    $('#step-code').classList.remove('hide');
+    $('#code').focus();
+    msg(email + ' 로 코드를 보냈어요. 10분 안에 넣어 주세요.', 'good');
+  } catch (e) { msg(e.message, 'bad'); }
+  finally { $('#send').disabled = false; }
+};
+
+$('#wipe').onclick = async () => {
+  const code = $('#code').value.trim();
+  if (!/^\d{6}$/.test(code)) return msg('여섯 자리 숫자예요.', 'bad');
+  if (!confirm('정말 지울까요?\n모든 다이어리와 사진이 사라지고 되돌릴 수 없어요.')) return;
+  $('#wipe').disabled = true; msg('확인하는 중…');
+  try {
+    const out = await call('POST', '../api/auth/verify', { email, code });
+    token = out.token;
+    /* 그 메일로 된 계정이 없었다면 verify 가 빈 계정을 하나 만든다 — 그것도 그대로 지운다 */
+    const fresh = !(out.me && out.me.onboarded);
+    await call('DELETE', '../api/me', null, token);
+    $('#step-code').classList.add('hide');
+    msg(fresh
+      ? '그 메일로 쓰시던 계정은 없었어요. 남아 있던 것까지 정리했습니다.'
+      : '지웠습니다. 계정과 기록이 모두 사라졌어요.', 'good');
+  } catch (e) { msg(e.message, 'bad'); $('#wipe').disabled = false; }
+};
+
+$('#email').addEventListener('keydown', e => { if (e.key === 'Enter') $('#send').click(); });
+$('#code').addEventListener('keydown', e => { if (e.key === 'Enter') $('#wipe').click(); });
+</script>
+</body>
+</html>

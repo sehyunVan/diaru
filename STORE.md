@@ -82,7 +82,9 @@ Play 데이터 안전성 설문 답:
 - 제3자와 **공유하지 않음** (로그인 메일 발송을 위한 Resend 는 우리 대신 처리하는 서비스 제공업체)
 - 전송 중 **암호화됨** (HTTPS)
 - 사용자가 **데이터 삭제를 요청할 수 있음** — 앱 안에서 직접(마이 → 프로필 편집 → 계정 삭제)
-- 삭제 요청 URL: `https://diaru.64-227-141-147.sslip.io/legal/support.html`
+- **계정 삭제 URL**: `https://diaru.64-227-141-147.sslip.io/legal/delete.html`
+  Play 는 **앱 없이도 열리는 주소**를 따로 요구한다 — 지원 페이지로는 안 된다.
+  이 페이지는 안내만 하지 않고 **그 자리에서 지운다**(메일 코드 → 삭제). 앱을 이미 지운 사람도 쓸 수 있다.
 
 ---
 
@@ -161,7 +163,10 @@ Enter the email on the first screen, tap send, enter the code. The account is
 already set up, so you land on the home screen. A new account starts empty -
 no sample entries and no sample friends, by design.
 "Delete account" is in Profile > Edit profile and erases the handle, profile,
-entries, sessions and friend links in-app; it cannot be undone.
+entries, sessions and friend links in-app; it cannot be undone. The same thing
+can be done without the app, from a web page that asks for the sign-in email,
+sends a code and deletes the account on the spot:
+https://diaru.64-227-141-147.sslip.io/legal/delete.html
 There is no paid content of any kind.
 
 4. EXTERNAL SERVICES
