@@ -100,6 +100,22 @@ scp /tmp/diaru.tgz blr:/tmp/ && ssh blr 'cd /opt/diaru && tar -xzf /tmp/diaru.tg
 - Caddy 는 이 박스의 다른 사이트들과 **같은 파일을 쓴다**. 고치기 전에 백업하고
   `caddy validate` 로 본 뒤 reload 한다(트레이딩 루프가 같이 도는 박스다).
 
+## 스토어 제출용 그림 (2026-10-21)
+
+두 스토어가 요구하는 화소로 전부 구워 뒀다 — 규격·수량·만든 법은 [`site/README.md`](site/README.md),
+마지막으로 잰 값은 [`site/manifest.json`](site/manifest.json).
+
+```
+node tools/store-shots.mjs    # 스크린샷 7묶음 (아이폰 4 · 아이패드 · Play 휴대폰 · 태블릿)
+node tools/store-promo.mjs    # 피처 그래픽 · App Store 홍보 그림 · 아이콘 모으기
+node tools/store-check.mjs    # 전부 다시 재고 manifest.json — 올리기 전에 반드시
+```
+
+스크린샷은 **진짜 앱을 띄워** 찍는다. 다만 가입하면 비어 있는 앱이라, 찍을 때만
+`tools/store-seed.mjs` 의 저장본을 localStorage 에 심는다 — 앱 코드에 견본을 되돌려 넣지 않는다.
+그림 자체는 `site/*` 가 저장소에서 빠져 있다(95MB). 생성 원본 두 장
+(`assets/src/store-promo.png`·`logo.png`)만 남겨 뒀다 — 다시 구우면 다른 그림이 나오기 때문이다.
+
 ## 구조
 
 ```
@@ -153,6 +169,24 @@ node tools/gen-stickers.mjs --force    # 다시
 - 앱 아이콘은 `node tools/gen-icon.mjs [navy|ivory|star]` 로 다시 굽는다. 지금은 ivory.
 - 속지 무늬는 `#paper` 가 `transform:scale()` 아래 있어서 줄 간격이 1px 단위로 흔들린다. 무늬를
   더 진하게 하면 그 흔들림이 같이 도드라진다.
+
+## 스토어에 내보내기
+
+| 어디 | 무엇 |
+|---|---|
+| [`RELEASE.md`](RELEASE.md) | 하는 순서 · 정해 둔 값 · 사람이 해야 하는 것 · 올리기 직전 점검 |
+| [`STORE.md`](STORE.md) | 스토어 원고 · 앱 개인정보/데이터 안전성 답 · 심사 답변 전문 |
+| [`mobile/`](mobile/README.md) | Capacitor 껍데기(`sarl.diaru.app`) · 눌러서 하지 않고 파일에 박는 설정들 |
+| [`site/`](site/README.md) | 스크린샷·아이콘·피처 그래픽 |
+| `dist/legal/` | 개인정보처리방침 · 지원 페이지(스토어가 **열리는 URL** 을 요구한다) |
+
+```bash
+node tools/pack-mobile.mjs      # dist/ → dist-mobile/ (서버 주소를 박는다)
+cd mobile && npm run sync && npm run aab
+```
+
+**앱이라서 달라지는 자리는 셋뿐이다** — 서버 주소(상대경로가 안 닿는다) · 토큰 보관(OS 가 회수한다) ·
+이미지 저장(`<a download>` 가 안 먹는다). 셋 다 `mobile/README.md` 끝에 적어 뒀다.
 
 ## 다음
 

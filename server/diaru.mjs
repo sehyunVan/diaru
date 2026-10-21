@@ -53,6 +53,10 @@ function save() {
 }
 
 const DIARY_DIR = path.join(path.dirname(DATA), 'diaries');
+/* 신고는 데이터베이스가 아니라 사람이 읽는 줄글이다 — 한 줄에 하나씩 덧붙인다.
+   클라이언트도 같은 사유 목록을 들고 있다(dist/app.js 의 REPORT_REASONS). 글자가 다르면 400 이 난다. */
+const REPORTS = path.join(path.dirname(DATA), 'reports.jsonl');
+const REPORT_REASONS = ['스팸·광고', '괴롭힘·욕설', '선정적인 내용', '남의 것을 베낌', '그 밖에'];
 const safeId = id => String(id || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
 const diaryPath = (owner, id) => path.join(DIARY_DIR, owner, safeId(id) + '.json');
 function readDiary(owner, id) { try { return JSON.parse(fs.readFileSync(diaryPath(owner, id), 'utf8')); } catch { return null; } }
@@ -359,6 +363,37 @@ const routes = {
     if (list[i].by !== me.handle && rec.owner !== me.id) return [403, { error: '지울 수 없어요.' }];
     list.splice(i, 1); save();
     return { ...reactions(id, me), list, mine: me.handle };
+  },
+
+  /* 신고 — 남이 올린 것(기록·댓글·사람)에 문제가 있다고 알리는 길.
+     차단만 있으면 App Store 1.2 를 못 넘는다: 가린다고 신고가 되는 건 아니라서,
+     「우리에게 알리는」 수단이 따로 있어야 한다.
+     여기서는 지우지 않는다 — 사람이 읽고 판단하도록 reports.jsonl 에 한 줄씩 쌓는다.
+     급한 차단은 클라이언트가 /api/friends/block 을 이어서 부른다. */
+  'POST /api/report': async (req, body) => {
+    const me = userOf(req); if (!me) return [401, { error: '로그인이 필요해요.' }];
+    const kind = String(body.kind || '');
+    if (!['diary', 'comment', 'person'].includes(kind)) return [400, { error: '무엇을 신고하는지 알 수 없어요.' }];
+    const reason = String(body.reason || '');
+    if (!REPORT_REASONS.includes(reason)) return [400, { error: '사유를 골라 주세요.' }];
+    const today = new Date().toISOString().slice(0, 10);
+    const tally = (db.reportTally = db.reportTally || {});
+    const key = me.id + ':' + today;
+    tally[key] = (tally[key] || 0) + 1;
+    if (tally[key] > 20) return [429, { error: '오늘은 신고를 너무 많이 보냈어요.' }];
+    const row = {
+      at: new Date().toISOString(), by: me.handle, kind, reason,
+      target: String(body.target || '').slice(0, 80),
+      about: String(body.about || '').slice(0, 40),       // 누가 올린 것인지(아는 경우)
+      note: String(body.note || '').slice(0, 300),
+    };
+    try {
+      fs.mkdirSync(path.dirname(REPORTS), { recursive: true });
+      fs.appendFileSync(REPORTS, JSON.stringify(row) + '\n');
+    } catch (e) { console.error('신고를 적지 못했다', e); return [500, { error: '신고를 보내지 못했어요.' }]; }
+    console.log('[신고]', row.kind, row.reason, 'by @' + row.by, row.target);
+    save();
+    return { ok: true, reasons: REPORT_REASONS };
   },
 
   'GET /api/feed': async (req) => {

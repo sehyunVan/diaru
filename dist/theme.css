@@ -175,3 +175,17 @@ body{font-family:'Noto Sans KR',sans-serif;background:#eeede9;-webkit-font-smoot
 .landing-start>svg{display:none}.landing-start>span:last-child{font-size:21px;font-weight:400}.landing-start:hover{background:#3c4c60;box-shadow:none;transform:translateY(-1px)}
 @media(max-height:700px){.landing-sky{top:82px;height:42%}.landing-title{top:calc(42% + 98px)}.landing-logo{font-size:58px}.landing-footer{top:calc(42% + 160px)}.landing-cta{bottom:22px}.landing-start{min-height:50px;padding:14px 20px}}
 @media(prefers-reduced-motion:reduce){.landing-start:hover{transform:none}}
+
+/* 아래에서 올라오는 목록 — 신고·차단처럼 「고르고 끝나는」 일에만 쓴다.
+   사람·기록·댓글이 전부 이 하나를 쓴다(판을 새로 만들지 않는다). */
+.sheet-back{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center;
+  background:#2d3c5033;backdrop-filter:blur(3px)}
+.sheet{width:min(var(--phone-width,100%),420px);background:var(--ivory);border-radius:22px 22px 0 0;
+  padding:18px 14px calc(14px + env(safe-area-inset-bottom));box-shadow:0 -10px 40px #2d3c5024}
+.sheet-title{display:block;text-align:center;font-size:12px;color:var(--muted);font-weight:500;
+  padding:2px 10px 12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sheet-item{display:block;width:100%;padding:15px 16px;border-radius:14px;background:var(--paper);
+  font-size:14px;color:var(--ink);text-align:left;margin-bottom:7px}
+.sheet-item.danger{color:#a4545d}
+.sheet-item.cancel{background:transparent;color:var(--muted);text-align:center;margin:4px 0 0}
+.reactions .react.more{margin-left:auto;letter-spacing:1px}

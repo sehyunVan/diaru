@@ -1,0 +1,515 @@
+{
+  "generated": "2026-10-21",
+  "groups": [
+    {
+      "path": "appstore/iphone-6.9",
+      "required": "1290×2796",
+      "count": 7,
+      "files": [
+        {
+          "file": "01-spread.png",
+          "px": "1290×2796",
+          "alpha": false,
+          "kb": 950
+        },
+        {
+          "file": "02-decorate.png",
+          "px": "1290×2796",
+          "alpha": false,
+          "kb": 894
+        },
+        {
+          "file": "03-home.png",
+          "px": "1290×2796",
+          "alpha": false,
+          "kb": 813
+        },
+        {
+          "file": "04-stickers.png",
+          "px": "1290×2796",
+          "alpha": false,
+          "kb": 605
+        },
+        {
+          "file": "05-papers.png",
+          "px": "1290×2796",
+          "alpha": false,
+          "kb": 181
+        },
+        {
+          "file": "06-feed.png",
+          "px": "1290×2796",
+          "alpha": false,
+          "kb": 1065
+        },
+        {
+          "file": "07-profile.png",
+          "px": "1290×2796",
+          "alpha": false,
+          "kb": 1167
+        }
+      ]
+    },
+    {
+      "path": "appstore/iphone-6.5",
+      "required": "1284×2778",
+      "count": 7,
+      "files": [
+        {
+          "file": "01-spread.png",
+          "px": "1284×2778",
+          "alpha": false,
+          "kb": 944
+        },
+        {
+          "file": "02-decorate.png",
+          "px": "1284×2778",
+          "alpha": false,
+          "kb": 876
+        },
+        {
+          "file": "03-home.png",
+          "px": "1284×2778",
+          "alpha": false,
+          "kb": 794
+        },
+        {
+          "file": "04-stickers.png",
+          "px": "1284×2778",
+          "alpha": false,
+          "kb": 603
+        },
+        {
+          "file": "05-papers.png",
+          "px": "1284×2778",
+          "alpha": false,
+          "kb": 178
+        },
+        {
+          "file": "06-feed.png",
+          "px": "1284×2778",
+          "alpha": false,
+          "kb": 1054
+        },
+        {
+          "file": "07-profile.png",
+          "px": "1284×2778",
+          "alpha": false,
+          "kb": 1151
+        }
+      ]
+    },
+    {
+      "path": "appstore/iphone-6.1",
+      "required": "1179×2556",
+      "count": 7,
+      "files": [
+        {
+          "file": "01-spread.png",
+          "px": "1179×2556",
+          "alpha": false,
+          "kb": 813
+        },
+        {
+          "file": "02-decorate.png",
+          "px": "1179×2556",
+          "alpha": false,
+          "kb": 685
+        },
+        {
+          "file": "03-home.png",
+          "px": "1179×2556",
+          "alpha": false,
+          "kb": 572
+        },
+        {
+          "file": "04-stickers.png",
+          "px": "1179×2556",
+          "alpha": false,
+          "kb": 499
+        },
+        {
+          "file": "05-papers.png",
+          "px": "1179×2556",
+          "alpha": false,
+          "kb": 151
+        },
+        {
+          "file": "06-feed.png",
+          "px": "1179×2556",
+          "alpha": false,
+          "kb": 826
+        },
+        {
+          "file": "07-profile.png",
+          "px": "1179×2556",
+          "alpha": false,
+          "kb": 1003
+        }
+      ]
+    },
+    {
+      "path": "appstore/iphone-6.3",
+      "required": "1206×2622",
+      "count": 7,
+      "files": [
+        {
+          "file": "01-spread.png",
+          "px": "1206×2622",
+          "alpha": false,
+          "kb": 849
+        },
+        {
+          "file": "02-decorate.png",
+          "px": "1206×2622",
+          "alpha": false,
+          "kb": 757
+        },
+        {
+          "file": "03-home.png",
+          "px": "1206×2622",
+          "alpha": false,
+          "kb": 617
+        },
+        {
+          "file": "04-stickers.png",
+          "px": "1206×2622",
+          "alpha": false,
+          "kb": 540
+        },
+        {
+          "file": "05-papers.png",
+          "px": "1206×2622",
+          "alpha": false,
+          "kb": 159
+        },
+        {
+          "file": "06-feed.png",
+          "px": "1206×2622",
+          "alpha": false,
+          "kb": 892
+        },
+        {
+          "file": "07-profile.png",
+          "px": "1206×2622",
+          "alpha": false,
+          "kb": 1031
+        }
+      ]
+    },
+    {
+      "path": "appstore/ipad-13",
+      "required": "2064×2752",
+      "count": 7,
+      "files": [
+        {
+          "file": "01-spread.png",
+          "px": "2064×2752",
+          "alpha": false,
+          "kb": 460
+        },
+        {
+          "file": "02-decorate.png",
+          "px": "2064×2752",
+          "alpha": false,
+          "kb": 398
+        },
+        {
+          "file": "03-home.png",
+          "px": "2064×2752",
+          "alpha": false,
+          "kb": 334
+        },
+        {
+          "file": "04-stickers.png",
+          "px": "2064×2752",
+          "alpha": false,
+          "kb": 310
+        },
+        {
+          "file": "05-papers.png",
+          "px": "2064×2752",
+          "alpha": false,
+          "kb": 126
+        },
+        {
+          "file": "06-feed.png",
+          "px": "2064×2752",
+          "alpha": false,
+          "kb": 444
+        },
+        {
+          "file": "07-profile.png",
+          "px": "2064×2752",
+          "alpha": false,
+          "kb": 581
+        }
+      ]
+    },
+    {
+      "path": "play/phone",
+      "required": "1080×1920",
+      "count": 7,
+      "files": [
+        {
+          "file": "01-spread.png",
+          "px": "1080×1920",
+          "alpha": false,
+          "kb": 689
+        },
+        {
+          "file": "02-decorate.png",
+          "px": "1080×1920",
+          "alpha": false,
+          "kb": 377
+        },
+        {
+          "file": "03-home.png",
+          "px": "1080×1920",
+          "alpha": false,
+          "kb": 346
+        },
+        {
+          "file": "04-stickers.png",
+          "px": "1080×1920",
+          "alpha": false,
+          "kb": 271
+        },
+        {
+          "file": "05-papers.png",
+          "px": "1080×1920",
+          "alpha": false,
+          "kb": 115
+        },
+        {
+          "file": "06-feed.png",
+          "px": "1080×1920",
+          "alpha": false,
+          "kb": 564
+        },
+        {
+          "file": "07-profile.png",
+          "px": "1080×1920",
+          "alpha": false,
+          "kb": 744
+        }
+      ]
+    },
+    {
+      "path": "play/tablet",
+      "required": "1440×2560",
+      "count": 7,
+      "files": [
+        {
+          "file": "01-spread.png",
+          "px": "1440×2560",
+          "alpha": false,
+          "kb": 449
+        },
+        {
+          "file": "02-decorate.png",
+          "px": "1440×2560",
+          "alpha": false,
+          "kb": 388
+        },
+        {
+          "file": "03-home.png",
+          "px": "1440×2560",
+          "alpha": false,
+          "kb": 324
+        },
+        {
+          "file": "04-stickers.png",
+          "px": "1440×2560",
+          "alpha": false,
+          "kb": 300
+        },
+        {
+          "file": "05-papers.png",
+          "px": "1440×2560",
+          "alpha": false,
+          "kb": 119
+        },
+        {
+          "file": "06-feed.png",
+          "px": "1440×2560",
+          "alpha": false,
+          "kb": 435
+        },
+        {
+          "file": "07-profile.png",
+          "px": "1440×2560",
+          "alpha": false,
+          "kb": 570
+        }
+      ]
+    },
+    {
+      "path": "appstore/promo/header-3840x1646.png",
+      "required": "3840×1646",
+      "count": 1,
+      "files": [
+        {
+          "file": "header-3840x1646.png",
+          "px": "3840×1646",
+          "alpha": false,
+          "kb": 12502
+        }
+      ]
+    },
+    {
+      "path": "appstore/promo/header-5244x2950.png",
+      "required": "5244×2950",
+      "count": 1,
+      "files": [
+        {
+          "file": "header-5244x2950.png",
+          "px": "5244×2950",
+          "alpha": false,
+          "kb": 28217
+        }
+      ]
+    },
+    {
+      "path": "appstore/promo/search-1920x1280.png",
+      "required": "1920×1280",
+      "count": 1,
+      "files": [
+        {
+          "file": "search-1920x1280.png",
+          "px": "1920×1280",
+          "alpha": false,
+          "kb": 5372
+        }
+      ]
+    },
+    {
+      "path": "appstore/promo/search-3840x2560.png",
+      "required": "3840×2560",
+      "count": 1,
+      "files": [
+        {
+          "file": "search-3840x2560.png",
+          "px": "3840×2560",
+          "alpha": false,
+          "kb": 19636
+        }
+      ]
+    },
+    {
+      "path": "appstore/icon-1024x1024.png",
+      "required": "1024×1024",
+      "count": 1,
+      "files": [
+        {
+          "file": "icon-1024x1024.png",
+          "px": "1024×1024",
+          "alpha": false,
+          "kb": 41
+        }
+      ]
+    },
+    {
+      "path": "play/icon-512x512.png",
+      "required": "512×512",
+      "count": 1,
+      "files": [
+        {
+          "file": "icon-512x512.png",
+          "px": "512×512",
+          "alpha": true,
+          "kb": 241
+        }
+      ]
+    },
+    {
+      "path": "play/feature-graphic-1024x500.png",
+      "required": "1024×500",
+      "count": 1,
+      "files": [
+        {
+          "file": "feature-graphic-1024x500.png",
+          "px": "1024×500",
+          "alpha": false,
+          "kb": 1141
+        }
+      ]
+    }
+  ],
+  "icons": [
+    {
+      "file": "dist/icons/icon-1024.png",
+      "px": "1024×1024",
+      "alpha": true,
+      "kb": 774
+    },
+    {
+      "file": "dist/icons/icon-512.png",
+      "px": "512×512",
+      "alpha": true,
+      "kb": 241
+    },
+    {
+      "file": "dist/icons/icon-256.png",
+      "px": "256×256",
+      "alpha": true,
+      "kb": 72
+    },
+    {
+      "file": "dist/icons/icon-192.png",
+      "px": "192×192",
+      "alpha": true,
+      "kb": 42
+    },
+    {
+      "file": "dist/icons/icon-180.png",
+      "px": "180×180",
+      "alpha": true,
+      "kb": 37
+    },
+    {
+      "file": "dist/icons/icon-152.png",
+      "px": "152×152",
+      "alpha": true,
+      "kb": 28
+    },
+    {
+      "file": "dist/icons/icon-120.png",
+      "px": "120×120",
+      "alpha": true,
+      "kb": 18
+    },
+    {
+      "file": "dist/icons/icon-76.png",
+      "px": "76×76",
+      "alpha": true,
+      "kb": 8
+    },
+    {
+      "file": "dist/icons/icon-64.png",
+      "px": "64×64",
+      "alpha": true,
+      "kb": 6
+    },
+    {
+      "file": "dist/icons/icon-32.png",
+      "px": "32×32",
+      "alpha": true,
+      "kb": 2
+    },
+    {
+      "file": "dist/icons/icon-16.png",
+      "px": "16×16",
+      "alpha": true,
+      "kb": 1
+    },
+    {
+      "file": "dist/icons/icon-maskable-512.png",
+      "px": "512×512",
+      "alpha": true,
+      "kb": 244
+    }
+  ],
+  "ok": true,
+  "problems": []
+}

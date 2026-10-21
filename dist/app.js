@@ -368,10 +368,23 @@ async function spreadToBlob(scale){const W=1200,H=1000,paper=$('#paper');
  spine.addColorStop(.52,'rgba(255,255,255,.53)');spine.addColorStop(1,'rgba(255,255,255,0)');
  g.fillStyle=spine;g.fillRect(W/2-20,0,40,H);
  return await new Promise(r=>c.toBlob(r,'image/png'))}
+const isNative=()=>{try{return !!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform())}catch{return false}};
+/* 앱 안에서는 <a download> 가 아무 일도 하지 않는다(웹뷰라 내려받을 곳이 없다).
+   파일로 적고 OS 공유 시트를 연다 — 거기서 「이미지 저장」을 고르면 사진첩으로 간다. */
+async function shareBlobNatively(blob,name){
+ const P=window.Capacitor.Plugins,{Filesystem,Share}=P;
+ if(!Filesystem||!Share)return false;
+ const b64=await new Promise((res,rej)=>{const r=new FileReader();
+  r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=rej;r.readAsDataURL(blob)});
+ const {uri}=await Filesystem.writeFile({path:name,data:b64,directory:'CACHE'});
+ await Share.share({title:name,files:[uri]});
+ return true}
 $('#export').onclick=async()=>{const button=$('#export');button.disabled=true;toast('이미지를 만들고 있어요.');
  try{const blob=await spreadToBlob(2);if(!blob)throw Error('blob');
+  const name=(capture().title||'diaru').replace(/[<>:"/\\|?*]/g,'')+'.png';
+  if(isNative()&&await shareBlobNatively(blob,name)){toast('이미지를 만들었어요.');return}
   const url=URL.createObjectURL(blob),link=el('a');
-  link.href=url;link.download=(capture().title||'diaru').replace(/[<>:"/\\|?*]/g,'')+'.png';link.click();
+  link.href=url;link.download=name;link.click();
   setTimeout(()=>URL.revokeObjectURL(url),10000);
   toast('이미지로 저장했어요. ('+(blob.size/1024/1024).toFixed(1)+'MB)')}
  catch{toast('이미지를 만들지 못했어요. 사진을 다시 불러오고 시도해주세요.')}
@@ -397,11 +410,18 @@ function reactionRow(d){const row=el('div','reactions'),mine=!d.author;
  else heart.onclick=async()=>{if(!loggedIn())return toast('로그인하면 마음을 찍을 수 있어요.');
   try{const out=await api('POST','api/diaries/heart',{id:d.id});
    d.hearts=out.hearts;d.hearted=out.hearted;renderFeed()}catch(e){toast(e.message)}};
- const talk=el('button','react');
+ const talk=el('button','react talk');
  talk.append(el('span','','✎'),el('b','',String(d.comments||0)));
  talk.setAttribute('aria-label','댓글');
  talk.onclick=()=>toggleComments(d,row);
- row.append(heart,talk);return row}
+ row.append(heart,talk);
+ if(!mine){const more=el('button','react more','⋯');            /* 남의 기록에만 — 내 것은 신고할 일이 없다 */
+  more.setAttribute('aria-label','이 기록 신고하거나 차단하기');
+  more.onclick=()=>sheet(d.title||'이 기록',[
+   {label:'이 기록 신고하기',run:()=>reportSheet('diary',d.id,d.author||'')},
+   {label:'@'+(d.author||'')+' 차단하기',danger:true,run:()=>toggleBlock(d.author)}]);
+  row.append(more)}
+ return row}
 function toggleComments(d,row){const next=row.nextElementSibling;
  if(next&&next.classList.contains('comment-box')){next.remove();return}
  const box=el('div','comment-box');row.after(box);fillComments(d,box,row)}
@@ -410,7 +430,7 @@ async function fillComments(d,box,row){box.replaceChildren(el('p','storage-note'
  let out;try{out=await api('GET','api/diaries/comments?id='+encodeURIComponent(d.id))}
  catch(e){box.replaceChildren(el('p','storage-note',e.message));return}
  d.comments=out.comments;d.hearts=out.hearts;d.hearted=out.hearted;
- row.querySelector('button:last-child b').textContent=String(out.comments);
+ row.querySelector('.react.talk b').textContent=String(out.comments);   /* ⋯ 가 붙어서 :last-child 로는 못 찾는다 */
  box.replaceChildren();
  const list=el('div','comment-list');
  (out.list||[]).forEach(c=>{const line=el('div','comment');
@@ -418,6 +438,9 @@ async function fillComments(d,box,row){box.replaceChildren(el('p','storage-note'
   if(c.by===out.mine||!d.author){const x=el('button','comment-x','×');x.setAttribute('aria-label','지우기');
    x.onclick=async()=>{try{await api('POST','api/diaries/comment/delete',{id:d.id,at:c.at});fillComments(d,box,row)}catch(e){toast(e.message)}};
    line.append(x)}
+  else{const r=el('button','comment-x','⋯');r.setAttribute('aria-label','이 댓글 신고하기');
+   r.onclick=()=>reportSheet('comment',d.id+'#'+c.at,c.by);
+   line.append(r)}
   list.append(line)});
  if(!(out.list||[]).length)list.append(el('p','storage-note','아직 아무 말도 없어요.'));
  const form=el('div','comment-form'),input=el('input');
@@ -532,11 +555,36 @@ function actionButton(hd){const how=relation(hd);
   else if(how==='incoming')acceptRequest(hd);
   else sendRequest(hd)};
  return b}
+/* ── 신고 ───────────────────────────────────────────
+   차단은 내 눈에서 가리는 일이고, 신고는 우리에게 알리는 일이다 — 둘은 다른 물건이고
+   App Store 1.2 는 사용자가 올린 것이 있는 앱에 둘 다 요구한다.
+   화면은 하나만 쓴다: 아래에서 올라오는 목록. 사람·기록·댓글이 전부 이걸 쓴다.
+   사유 글자는 서버(server/diaru.mjs 의 REPORT_REASONS)와 **똑같아야** 한다 — 다르면 400 이 난다. */
+const REPORT_REASONS=['스팸·광고','괴롭힘·욕설','선정적인 내용','남의 것을 베낌','그 밖에'];
+function sheet(title,items){
+ const back=el('div','sheet-back'),box=el('div','sheet');
+ const esc=e=>{if(e.key==='Escape')close()};
+ function close(){back.remove();document.removeEventListener('keydown',esc)}
+ box.append(el('b','sheet-title',title));
+ items.forEach(it=>{const b=el('button','sheet-item'+(it.danger?' danger':''),it.label);
+  b.onclick=()=>{close();it.run()};box.append(b)});
+ const cancel=el('button','sheet-item cancel','닫기');cancel.onclick=close;box.append(cancel);
+ back.append(box);back.onclick=e=>{if(e.target===back)close()};
+ document.body.append(back);document.addEventListener('keydown',esc);
+ return close}
+function reportSheet(kind,target,about){
+ if(!loggedIn())return toast('로그인하면 신고할 수 있어요.');
+ const what={diary:'이 기록',comment:'이 댓글',person:'@'+about+' 님'}[kind]||'이것';
+ sheet(what+'을 신고하기',REPORT_REASONS.map(reason=>({label:reason,run:async()=>{
+  try{await api('POST','api/report',{kind,target,about,reason});
+   toast('신고를 보냈어요. 확인하고 조치할게요.')}catch(e){toast(e.message)}}})))}
 function moreButton(hd){const how=relation(hd),m=el('button','person-more','⋯');
- m.setAttribute('aria-label','@'+hd+(how==='incoming'?' 신청 거절하거나 차단하기':' 차단하기'));
+ m.setAttribute('aria-label','@'+hd+' 신고하거나 차단하기');
  m.onclick=e=>{e.stopPropagation();
-  if(how==='incoming'&&confirm('@'+hd+' 님의 신청을 거절할까요?\n(취소를 누르면 차단합니다)'))return declineRequest(hd);
-  toggleBlock(hd)};
+  const items=[{label:'신고하기',run:()=>reportSheet('person','@'+hd,hd)}];
+  if(how==='incoming')items.push({label:'신청 거절하기',run:()=>declineRequest(hd)});
+  items.push({label:'차단하기',danger:true,run:()=>toggleBlock(hd)});
+  sheet('@'+hd,items)};
  return m}
 function personRow(p){const row=el('div','person'),hd=p.handle,friend=isFriend(hd),how=relation(hd);
  const face=el('span','person-face'+(friend?'':' veiled'));
@@ -690,10 +738,26 @@ function renderPapers(){['#home-papers','#shop-papers'].forEach(sel=>{const root
 /* ── 서버 ───────────────────────────────────────────
    서버가 있으면(같은 주소에서 /api/health 가 답하면) 계정은 서버에 산다.
    없으면 지금까지처럼 이 기기에만 있다 — 화면은 같고 저장되는 곳만 달라진다. */
-const API={token:null,on:false,email:''};
-try{API.token=localStorage.getItem('diaru-token')}catch{}
+const API={token:null,on:false,email:'',base:''};
+/* 앱(Capacitor)에서는 출처가 capacitor://localhost 라 상대경로가 서버에 닿지 않는다.
+   tools/pack-mobile.mjs 가 굽는 번들에만 window.DIARU_API 가 박혀 있다 — 웹에서는 비어서 지금까지대로 상대경로. */
+try{API.base=String(window.DIARU_API||'').replace(/\/+$/,'')}catch{}
+const apiURL=path=>API.base?API.base+'/'+String(path).replace(/^\/+/,''):path;
+/* 웹뷰 저장소는 OS 가 회수한다(저장 공간 압박·앱 오프로드·캐시 삭제) — 토큰은 네이티브 쪽에도 같이 적는다.
+   SHIPPING.md: 2026-10-18 에 「기기 둘에서 로그인이 풀렸다」가 이것이었다. */
+const nativeStore=()=>{try{return window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Preferences||null}catch{return null}};
+async function keepToken(tok){
+ try{tok?localStorage.setItem('diaru-token',tok):localStorage.removeItem('diaru-token')}catch{}
+ const P=nativeStore();if(!P)return;
+ try{tok?await P.set({key:'diaru-token',value:tok}):await P.remove({key:'diaru-token'})}catch{}}
+async function restoreToken(){
+ try{API.token=localStorage.getItem('diaru-token')}catch{}
+ if(API.token)return;
+ const P=nativeStore();if(!P)return;
+ try{const got=await P.get({key:'diaru-token'});
+  if(got&&got.value){API.token=got.value;try{localStorage.setItem('diaru-token',got.value)}catch{}}}catch{}}
 async function api(method,path,body){
- const r=await fetch(path,{method,headers:{'Content-Type':'application/json',
+ const r=await fetch(apiURL(path),{method,headers:{'Content-Type':'application/json',
   ...(API.token?{Authorization:'Bearer '+API.token}:{})},body:body?JSON.stringify(body):undefined});
  const json=await r.json().catch(()=>({}));
  if(!r.ok)throw Object.assign(new Error(json.error||'서버가 응답하지 않아요.'),{status:r.status});
@@ -716,19 +780,22 @@ function adoptAccount(acc){
 async function pushProfile(patch){if(!API.on||!API.token)return;
  try{await api('PATCH','api/me',patch)}catch(e){toast(e.message)}}
 async function connectServer(){
- try{const r=await fetch('api/health',{cache:'no-store',signal:AbortSignal.timeout(4500)});if(!r.ok)return false;API.on=true}catch{return false}
+ /* 토큰 되살리기는 로그인 게이트보다 먼저 돌아야 한다 — 늦으면 멀쩡한 사람에게 로그인 화면이 뜬다 */
+ await restoreToken();
+ try{const r=await fetch(apiURL('api/health'),{cache:'no-store',signal:AbortSignal.timeout(4500)});if(!r.ok)return false;API.on=true}catch{return false}
  if(API.token){try{adoptAccount((await api('GET','api/me')).me)}
-  catch{API.token=null;try{localStorage.removeItem('diaru-token')}catch{}}}
+  catch{API.token=null;await keepToken(null)}}
  return true}
 $('#profile-delete').onclick=async()=>{
  if(!confirm('계정을 지울까요?\n아이디와 친구 관계가 사라지고 되돌릴 수 없어요.'))return;
  if(!confirm('정말 지울까요? 이 기기의 기록도 함께 지웁니다.'))return;
  try{await api('DELETE','api/me')}catch(e){return toast(e.message)}
+ API.token=null;await keepToken(null);          /* 네이티브 쪽도 지운다 — 안 지우면 다음 부팅에 되살아난다 */
  try{localStorage.clear()}catch{}
  location.reload()};
 $('#profile-logout').onclick=async()=>{if(!confirm('로그아웃할까요?'))return;
  try{await api('POST','api/auth/logout',{})}catch{}
- API.token=null;try{localStorage.removeItem('diaru-token')}catch{}
+ API.token=null;await keepToken(null)
  me.onboarded=false;saveMe();location.reload()};
 
 function showAuthStep(id){$$('#auth .auth-step').forEach(s=>s.classList.toggle('hidden',s.id!==id))}
@@ -762,7 +829,7 @@ $('#auth-email-input').onkeydown=e=>{if(e.key==='Enter')sendCode()};
 $('#auth-verify').onclick=async()=>{const code=$('#auth-code-input').value.trim();
  $('#auth-verify').disabled=true;
  try{const out=await api('POST','api/auth/verify',{email:API.email,code});
-  API.token=out.token;try{localStorage.setItem('diaru-token',out.token)}catch{}
+  API.token=out.token;await keepToken(out.token)
   adoptAccount(out.me);
   if(out.me.onboarded){finishAuth();return}
   showAuthStep('auth-handle');$('#auth-handle-input').value=out.me.handle;

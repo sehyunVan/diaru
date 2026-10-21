@@ -173,7 +173,22 @@ ok((await call('GET', '/api/handle?h=goner')).json.free === true, '쓰던 아이
 const reborn = await login('gone@example.com');
 ok(/^diaru_/.test(reborn.me.handle) && reborn.me.onboarded === false, '같은 메일로 다시 들어오면 새 계정');
 
+/* 신고 — 차단과는 다른 길이다. App Store 1.2 가 둘 다 요구한다. */
+const rp = await login('reporter@example.com');
+await call('PATCH', '/api/me', { handle: 'reporter', onboarded: true }, rp.token);
+ok((await call('POST', '/api/report', { kind: 'person', target: '@sehyun', about: 'sehyun', reason: '괴롭힘·욕설' }, rp.token)).json.ok === true, '사람 신고');
+ok((await call('POST', '/api/report', { kind: 'diary', target: 'abc123', reason: '스팸·광고' }, rp.token)).json.ok === true, '기록 신고');
+ok((await call('POST', '/api/report', { kind: 'diary', target: 'abc123', reason: '마음에 안 듦' }, rp.token)).status === 400, '없는 사유는 거절');
+ok((await call('POST', '/api/report', { kind: '아무거나', target: 'x', reason: '스팸·광고' }, rp.token)).status === 400, '없는 종류는 거절');
+ok((await call('POST', '/api/report', { kind: 'person', target: '@x', reason: '스팸·광고' })).status === 401, '로그인 없이는 못 신고');
+{
+  const file = path.join(path.dirname(DATA), 'reports.jsonl');
+  const lines = fs.readFileSync(file, 'utf8').trim().split('\n').map(l => JSON.parse(l));
+  ok(lines.length === 2 && lines[0].by === 'reporter' && lines[0].kind === 'person', '신고가 파일에 줄로 쌓인다');
+}
+
 console.log(`\n${pass}개 통과${fail ? ` · ${fail}개 실패` : ''}`);
 proc.kill();
 fs.rmSync(DATA, { force: true });
+fs.rmSync(path.join(path.dirname(DATA), 'reports.jsonl'), { force: true });
 process.exit(fail ? 1 : 0);

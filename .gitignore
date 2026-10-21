@@ -1,3 +1,30 @@
 assets/reference/
-assets/src/
 server/data/
+promo/out/
+
+# 생성 원본은 안 올린다 — 다만 스토어 홍보에 쓴 두 장은 남긴다.
+# 다시 구우면 **다른 그림**이 나오기 때문에(생성), 이 둘이 없으면 피처 그래픽을 복원할 수 없다.
+assets/src/*
+!assets/src/store-promo.png
+!assets/src/logo.png
+
+# 스토어 제출용 그림 95MB — 전부 tools/store-*.mjs 가 다시 굽는다.
+# 규격과 만든 법은 site/README.md 에, 마지막으로 잰 값은 site/manifest.json 에 남는다.
+site/*
+!site/README.md
+!site/manifest.json
+
+# 앱 껍데기 — 받은 것과 구운 것은 저장소에 안 넣는다
+node_modules/
+dist-mobile/
+mobile/ios/App/Pods/
+mobile/android/app/build/
+mobile/android/build/
+mobile/android/.gradle/
+
+# 비밀은 **이름으로** 적는다 — 경로로 적으면 다른 자리에 생긴 같은 파일이 샌다 (SHIPPING.md §4)
+keystore.properties
+*.jks
+*.keystore
+*.p8
+*.env
