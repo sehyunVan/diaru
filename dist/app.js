@@ -158,7 +158,7 @@ else if(data.type==='photo'){const img=el('img');img.src=data.content;img.alt='�
 applyPieceStyle(p,data);p.onpointerdown=e=>{selectPiece(p);if(p.isContentEditable)return;const box=p.getBoundingClientRect();if(data.type==='photo'&&e.clientX>box.right-18&&e.clientY>box.bottom-18){dirty=true;return}e.preventDefault();p.setPointerCapture(e.pointerId);const x=e.clientX,y=e.clientY,left=p.offsetLeft,top=p.offsetTop;p.onpointermove=ev=>{p.style.left=Math.max(0,Math.min(1200-p.offsetWidth,left+(ev.clientX-x)/scale))+'px';p.style.top=Math.max(0,Math.min(1000-p.offsetHeight,top+(ev.clientY-y)/scale))+'px';dirty=true};p.onpointerup=p.onpointercancel=()=>{p.onpointermove=null}};
 if(data.type==='text'){p.ondblclick=()=>{selectPiece(p);p.contentEditable='true';p.focus()};p.onblur=()=>{p.contentEditable='false';dirty=true};p.oninput=()=>dirty=true;p.onpaste=e=>{e.preventDefault();const sel=window.getSelection();if(sel.rangeCount){const r=sel.getRangeAt(0);r.deleteContents();r.insertNode(document.createTextNode(e.clipboardData.getData('text/plain')));sel.collapseToEnd()}}}$('#paper').append(p);dirty=true;return p;}
 function capture(){return{...current,layout:'spread',title:$('#title-input').value.trim()||'이름 없는 하루',background:$('#paper-color').value,paper:$('#paper').dataset.paper||'plain',shared:$('#share-scope').getAttribute('aria-pressed')==='true',items:$$('#paper .piece').map(p=>({type:p.dataset.type,content:p.dataset.type==='photo'?p.querySelector('img').getAttribute('src'):p.dataset.type==='sticker'?p.getAttribute('aria-label'):p.dataset.type==='ink'?'손글씨':p.innerText,sprite:p.dataset.sprite===undefined?undefined:Number(p.dataset.sprite),pack:p.dataset.pack,src:p.dataset.src,strokes:p.dataset.strokes?JSON.parse(p.dataset.strokes):undefined,rotation:Number(p.dataset.rotation||0),font:p.dataset.font,bold:p.dataset.bold==='true',italic:p.dataset.italic==='true',x:p.offsetLeft,y:p.offsetTop,w:p.offsetWidth,h:p.offsetHeight}))}}
-function save(){if(!current)return;const d=capture(),next=diaries.some(x=>x.id===d.id)?diaries.map(x=>x.id===d.id?d:x):[d,...diaries];try{localStorage.setItem('diaru-diaries-v1',JSON.stringify(next));diaries=next;current=d;dirty=false;renderDiaries();recordNotification(d);closeEditor(true);goto('home');toast('오늘의 기록을 저장했어요 ♡')}catch{toast('저장 공간이 부족해요. 공유 파일로 먼저 보관해주세요.')}}
+function save(){if(!current)return;const d=capture(),next=diaries.some(x=>x.id===d.id)?diaries.map(x=>x.id===d.id?d:x):[d,...diaries];try{diaries=next;cacheDiaries();pushDiary(d);current=d;dirty=false;renderDiaries();closeEditor(true);goto('home');toast('오늘의 기록을 저장했어요 ♡')}catch{toast('저장 공간이 부족해요. 공유 파일로 먼저 보관해주세요.')}}
 $('#save').onclick=save;$('#title-input').oninput=()=>dirty=true;$('#paper-color').oninput=e=>{$('#paper').style.backgroundColor=e.target.value;markSwatch(e.target.value);dirty=true};function closeEditor(force){setInkMode(false);if(!force&&dirty&&!confirm('저장하지 않은 내용이 있어요. 닫을까요?'))return;dirty=false;selectPiece(null);$('#editor').classList.add('hidden');$('#editor-drawer').classList.add('hidden');document.body.style.overflow='';document.querySelector('.app').inert=false}
 $('#close-editor').onclick=()=>closeEditor();$$('.new').forEach(b=>b.onclick=()=>openEditor());/* 손글씨 모드: 켜면 조각은 잠들고 종이가 받아 적는다. 끄면 그때까지 쓴 획이 한 덩어리로 굳는다. */
 let inkMode=false,inkPiece=null,inkStrokes=[],inkDrawing=null,inkColor='#2a3a57',inkWidth=9;
@@ -382,10 +382,88 @@ let feedMode='mine',activity=[];try{activity=JSON.parse(localStorage.getItem('di
 function spreadPreview(d){const preview=el('div','feed-spread paper-surface');preview.style.backgroundColor=d.background||'#fffdf7';if(d.paper&&d.paper!=='plain')preview.classList.add('p-'+d.paper);const mini=chromeNode(d.paper,true);if(mini)preview.append(mini);const surface=el('div','feed-surface');(d.items||[]).forEach(item=>{const p=el('div','feed-piece '+item.type);p.dataset.type=item.type;p.style.left=item.x/12+'%';p.style.top=item.y/10+'%';applyPieceStyle(p,{...item});if(item.type==='photo'){const img=el('img');img.src=item.content;img.alt='';p.style.width=(item.w||220)/12+'%';p.style.height=(item.h||190)/10+'%';p.append(img)}else if(item.type==='ink'){p.style.width=(item.w||100)/12+'%';p.style.height=(item.h||100)/10+'%';
   p.innerHTML=inkSvg(item.strokes||[],item.w||100,item.h||100)}
  else if(item.type==='sticker'){p.style.width='7.08%';if(typeof item.src==='string'&&item.src.startsWith('data:')){const im=el('img','custom-art');im.src=item.src;im.alt='';p.append(im)}else p.append(art(item.sprite??2,'',item.pack))}else{p.textContent=item.content;p.style.width=(item.w||540)/12+'%'}surface.append(p)});preview.append(surface);return preview}
-function renderFeed(){if(!$('#feed-list'))return;$('#feed-list').replaceChildren();$('.feed-privacy').textContent=feedMode==='mine'?'나만 보는 기록 · 이 기기에 저장된 다이어리':'친구가 된 사람의 기록만 보여요';const records=feedMode==='mine'?diaries.filter(d=>!String(d.id||'').startsWith('sample-')):friendFeed();if(!records.length){const empty=el('div','empty-state');empty.append(el('span','empty-symbol',feedMode==='mine'?'✎':'♡'),el('h2','',feedMode==='mine'?'첫 번째 이야기를 남겨보세요':'친구의 기록은 아직 여기 없어요'),el('p','',feedMode==='mine'?'저장한 다이어리가 이곳에 모여요.':'다이어리는 아직 기기에만 저장돼요. 서버로 옮기면 여기 쌓여요.'));const b=el('button','primary',feedMode==='mine'?'새 다이어리 만들기':'친구 찾기');b.onclick=()=>feedMode==='mine'?openEditor():goto('people');empty.append(b);$('#feed-list').append(empty);return}records.forEach(d=>{const card=el(d.author?'div':'button','feed-card');const top=el('div','feed-card-top');top.append(el('b','',d.author?d.author.name+' @'+d.author.handle:'나의 기록'),el('small','',d.date+(d.author?' · 친구 공개':d.shared?' · 친구 공개':' · 나만 보기')));const preview=spreadPreview(d);card.append(top,preview,el('h2','',d.title));if(!d.author){card.append(el('span','feed-open','기록 열기 ›'));card.onclick=()=>openEditor(d)}$('#feed-list').append(card)})}
-$$('[data-feed]').forEach(b=>b.onclick=()=>{feedMode=b.dataset.feed;$$('[data-feed]').forEach(x=>x.classList.toggle('selected',x===b));renderFeed()});
+function renderFeed(){if(!$('#feed-list'))return;$('#feed-list').replaceChildren();$('.feed-privacy').textContent=feedMode==='mine'?'나만 보는 기록 · 이 기기에 저장된 다이어리':'친구가 된 사람의 기록만 보여요';const records=feedMode==='mine'?diaries.filter(d=>!String(d.id||'').startsWith('sample-')):friendFeed();if(!records.length){const empty=el('div','empty-state');empty.append(el('span','empty-symbol',feedMode==='mine'?'✎':'♡'),el('h2','',feedMode==='mine'?'첫 번째 이야기를 남겨보세요':'친구의 기록은 아직 여기 없어요'),el('p','',feedMode==='mine'?'저장한 다이어리가 이곳에 모여요.':'다이어리는 아직 기기에만 저장돼요. 서버로 옮기면 여기 쌓여요.'));const b=el('button','primary',feedMode==='mine'?'새 다이어리 만들기':'친구 찾기');b.onclick=()=>feedMode==='mine'?openEditor():goto('people');empty.append(b);$('#feed-list').append(empty);return}records.forEach(d=>{const card=el('div','feed-card');const top=el('div','feed-card-top');top.append(el('b','',d.author?(d.author.name?d.author.name+' @'+d.author.handle:'@'+d.author.handle):'나의 기록'),el('small','',d.date+(d.author?' · 친구 공개':d.shared?' · 친구 공개':' · 나만 보기')));const preview=spreadPreview(d);card.append(top,preview,el('h2','',d.title));
+ card.append(reactionRow(d));
+ if(!d.author){const open=el('button','feed-open','기록 열기 ›');open.onclick=()=>openEditor(d);card.append(open)}
+ $('#feed-list').append(card)})}
+$$('[data-feed]').forEach(b=>b.onclick=()=>{feedMode=b.dataset.feed;$$('[data-feed]').forEach(x=>x.classList.toggle('selected',x===b));renderFeed();if(feedMode==='friends')pullFeed().then(renderFeed)});
+/* ── 마음과 댓글 ────────────────────────────────────
+   남의 기록에 눌러 두는 한 줄. 서버가 센 숫자를 그대로 보여 준다. */
+function reactionRow(d){const row=el('div','reactions'),mine=!d.author;
+ const heart=el('button','react'+(d.hearted?' on':''));
+ heart.append(el('span','',d.hearted?'♥':'♡'),el('b','',String(d.hearts||0)));
+ heart.setAttribute('aria-label','마음');
+ if(mine)heart.disabled=true;
+ else heart.onclick=async()=>{if(!loggedIn())return toast('로그인하면 마음을 찍을 수 있어요.');
+  try{const out=await api('POST','api/diaries/heart',{id:d.id});
+   d.hearts=out.hearts;d.hearted=out.hearted;renderFeed()}catch(e){toast(e.message)}};
+ const talk=el('button','react');
+ talk.append(el('span','','✎'),el('b','',String(d.comments||0)));
+ talk.setAttribute('aria-label','댓글');
+ talk.onclick=()=>toggleComments(d,row);
+ row.append(heart,talk);return row}
+function toggleComments(d,row){const next=row.nextElementSibling;
+ if(next&&next.classList.contains('comment-box')){next.remove();return}
+ const box=el('div','comment-box');row.after(box);fillComments(d,box,row)}
+async function fillComments(d,box,row){box.replaceChildren(el('p','storage-note','불러오는 중…'));
+ if(!loggedIn()){box.replaceChildren(el('p','storage-note','로그인하면 한 마디 남길 수 있어요.'));return}
+ let out;try{out=await api('GET','api/diaries/comments?id='+encodeURIComponent(d.id))}
+ catch(e){box.replaceChildren(el('p','storage-note',e.message));return}
+ d.comments=out.comments;d.hearts=out.hearts;d.hearted=out.hearted;
+ row.querySelector('button:last-child b').textContent=String(out.comments);
+ box.replaceChildren();
+ const list=el('div','comment-list');
+ (out.list||[]).forEach(c=>{const line=el('div','comment');
+  line.append(el('b','',c.name||'@'+c.by),el('span','',c.text));
+  if(c.by===out.mine||!d.author){const x=el('button','comment-x','×');x.setAttribute('aria-label','지우기');
+   x.onclick=async()=>{try{await api('POST','api/diaries/comment/delete',{id:d.id,at:c.at});fillComments(d,box,row)}catch(e){toast(e.message)}};
+   line.append(x)}
+  list.append(line)});
+ if(!(out.list||[]).length)list.append(el('p','storage-note','아직 아무 말도 없어요.'));
+ const form=el('div','comment-form'),input=el('input');
+ input.placeholder='한 마디 남기기';input.maxLength=300;input.setAttribute('aria-label','댓글');
+ const send=el('button','person-btn','보내기');
+ const post=async()=>{const text=input.value.trim();if(!text)return;input.value='';
+  try{await api('POST','api/diaries/comment',{id:d.id,text});fillComments(d,box,row)}catch(e){toast(e.message)}};
+ send.onclick=post;input.onkeydown=e=>{if(e.key==='Enter')post()};
+ form.append(input,send);box.append(list,form)}
+
 function recordNotification(d){activity=[{id:d.id,title:d.title,time:new Date().toISOString()},...activity.filter(a=>a.id!==d.id)].slice(0,20);try{localStorage.setItem('diaru-activity',JSON.stringify(activity))}catch{}$('.notification-button').classList.add('unread')}
-function renderNotifications(){$('#notification-list').replaceChildren();if(!activity.length){const empty=el('div','empty-state');empty.append(el('span','empty-symbol','♧'),el('h2','','아직 새로운 알림이 없어요'),el('p','','다이어리를 저장하면 여기에 알려드릴게요.'));$('#notification-list').append(empty);return}activity.forEach(a=>{const b=el('button','notification-item');b.append(el('b','',a.title),el('span','','다이어리를 저장했어요.'),el('small','',new Date(a.time).toLocaleString('ko-KR')));b.onclick=()=>{const d=diaries.find(d=>d.id===a.id);if(d)openEditor(d)};$('#notification-list').append(b)})}
+let notices=[];
+async function refreshNotices(){if(!loggedIn()){notices=[];return}
+ try{const out=await api('GET','api/notices');notices=out.notices||[];
+  $('.notification-button').classList.toggle('unread',(out.unseen||0)>0)}catch{}}
+function noticeLine(n){
+ const name=(n.byName||'').trim();
+ const who=name&&name!=='@'+n.by?name+' @'+n.by:'@'+n.by;   /* 옛 자료에 이름이 @아이디로 박힌 것 거르기 */
+ if(n.kind==='heart')return[who+' 님이 마음을 찍었어요',n.title||''];
+ if(n.kind==='comment')return[who+' 님이 한 마디 남겼어요',n.text||''];
+ if(n.kind==='request')return[who+' 님이 친구 신청을 보냈어요','수락하면 서로의 기록이 열려요'];
+ if(n.kind==='accept')return[who+' 님과 친구가 됐어요',''];
+ return[who,''];}
+async function renderNotifications(){const root=$('#notification-list');root.replaceChildren();
+ if(!loggedIn()){const empty=el('div','empty-state');
+  empty.append(el('span','empty-symbol','♧'),el('h2','','로그인하면 알림이 와요'),
+   el('p','','마음·댓글·친구 신청을 여기서 알려드릴게요.'));
+  root.append(empty);return}
+ await refreshNotices();
+ if(!notices.length){const empty=el('div','empty-state');
+  empty.append(el('span','empty-symbol','♧'),el('h2','','아직 새로운 알림이 없어요'),
+   el('p','','마음·댓글·친구 신청이 오면 여기에 쌓여요.'));
+  root.append(empty)}
+ else notices.forEach(n=>{const item=el('div','notification-item'+(n.seen?'':' fresh'));
+  const [head,body]=noticeLine(n);
+  item.append(el('b','',head));
+  if(body)item.append(el('span','',body));
+  item.append(el('small','',new Date(n.at).toLocaleString('ko-KR')));
+  if(n.kind==='request'&&relation(n.by)==='incoming'){
+   const yes=el('button','person-btn','수락');
+   yes.onclick=()=>acceptRequest(n.by).then(()=>renderNotifications());
+   item.append(yes)}
+  else if(n.diary){item.tabIndex=0;item.setAttribute('role','button');
+   item.onclick=()=>{feedMode='mine';$$('[data-feed]').forEach(x=>x.classList.toggle('selected',x.dataset.feed==='mine'));goto('feed')}}
+  root.append(item)});
+ try{await api('POST','api/notices/seen',{});$('.notification-button').classList.remove('unread')}catch{}}
 PACKS.forEach((p,n)=>{const i=[2,0,13,10,12][n%5],b=el('button');b.append(art(i,'',p.id),el('span','',p.name));b.onclick=()=>{openEditor();placePiece({type:'sticker',sprite:i,pack:p.id,content:p.cells[i][0],x:220,y:200})};$('#shop-stickers').append(b)});$('#sticker-sku').textContent=String(PACKS.length*16);
 window.addEventListener('beforeunload',e=>{if(dirty&&!$('#editor').classList.contains('hidden')){e.preventDefault();e.returnValue=''}});
 /* ── 사람들 ─────────────────────────────────────────────
@@ -429,8 +507,21 @@ function toggleBlock(hd){if(relation(hd)==='blocked')return act('unblock',hd,'�
  act('block',hd,'@'+hd+' 님을 차단했어요.')}
 const isFriend=hd=>relation(hd)==='friend';
 const isBlocked=hd=>relation(hd)==='blocked';
-/* 친구의 기록은 아직 서버에 없다 — 다이어리 동기화가 붙으면 여기만 바뀐다 */
-function friendFeed(){return[]}
+/* ── 기록은 계정에 붙는다 ──────────────────────────────
+   로그인하면 서버가 진짜고 기기 저장은 캐시다. 캐시 열쇠에 계정 id 를 넣어
+   계정을 바꿔도 남의 기록이 남지 않게 한다. */
+const diaryKey=()=>me.id?('diaru-diaries-'+me.id):'diaru-diaries-v1';
+function cacheDiaries(){try{localStorage.setItem(diaryKey(),JSON.stringify(diaries))}catch{}}
+function loadCachedDiaries(){try{const v=JSON.parse(localStorage.getItem(diaryKey()));diaries=Array.isArray(v)?v:[]}catch{diaries=[]}}
+async function pullDiaries(){if(!loggedIn())return;
+ try{const out=await api('GET','api/diaries');diaries=Array.isArray(out.diaries)?out.diaries:[];cacheDiaries();renderDiaries()}
+ catch(e){toast('기록을 불러오지 못했어요.')}}
+async function pushDiary(d){if(!loggedIn())return;
+ try{await api('POST','api/diaries',{diary:d})}catch(e){toast('서버에 저장하지 못했어요 — 이 기기에는 남아 있어요.')}}
+let feedCache=[];
+async function pullFeed(){if(!loggedIn()){feedCache=[];return}
+ try{feedCache=(await api('GET','api/feed')).feed||[]}catch{feedCache=[]}}
+function friendFeed(){return feedCache}
 
 function actionButton(hd){const how=relation(hd);
  const b=el('button','person-btn'+(how==='friend'||how==='sent'?' on':''),
@@ -552,7 +643,7 @@ function commitProfile(){const name=$('#profile-name-input').value.trim().slice(
  try{localStorage.setItem('diaru-profile-name',name)}catch{}   /* 비우면 비워진다 — 그러면 아이디가 이름 자리로 */
  me.bio=$('#profile-bio-input').value.trim().slice(0,60);
  /* 아이디는 가입할 때 한 번만 정한다 — 여기서는 고치지 않는다. */
- saveMe();renderProfile();pushProfile({name:$('.profile-detail h1').textContent,bio:me.bio})}
+ saveMe();renderProfile();pushProfile({name:savedName(),bio:me.bio})}
 $('#profile-edit-toggle').onclick=()=>setProfileEditing(!editingProfile);
 $('#profile-seal').onclick=()=>{if(editingProfile)$('#seal-input').click();else setProfileEditing(true)};
 $('.profile-cover').onclick=()=>{if(editingProfile)$('#cover-input').click()};
@@ -618,7 +709,10 @@ function adoptAccount(acc){
  if(settled||acc.cover)me.cover=acc.cover||null;
  saveMe();renderProfile();
  $('#profile-logout').classList.remove('hidden');$('#profile-delete').classList.remove('hidden');
- refreshFriends().then(()=>{renderPeople();renderProfile();renderFeed()})}
+ me.id=acc.id||me.id;saveMe();
+ loadCachedDiaries();renderDiaries();pullDiaries();
+ refreshFriends().then(()=>{renderPeople();renderProfile()});
+ pullFeed().then(renderFeed);refreshNotices()}
 async function pushProfile(patch){if(!API.on||!API.token)return;
  try{await api('PATCH','api/me',patch)}catch(e){toast(e.message)}}
 async function connectServer(){
@@ -676,8 +770,10 @@ $('#auth-verify').onclick=async()=>{const code=$('#auth-code-input').value.trim(
  catch(e){$('#auth-code-hint').textContent=e.message;$('#auth-code-hint').classList.add('bad')}
  finally{$('#auth-verify').disabled=false}};
 $('#auth-code-input').onkeydown=e=>{if(e.key==='Enter')$('#auth-verify').click()};
+function savedName(){try{return localStorage.getItem('diaru-profile-name')||''}catch{return ''}}
 function finishAuth(){me.onboarded=true;saveMe();renderProfile();
- pushProfile({name:$('.profile-detail h1').textContent,bio:me.bio,seal:me.seal,cover:me.cover,onboarded:true});
+ /* 화면엔 이름이 없으면 @아이디가 뜨지만, 저장되는 이름은 빈 채로 둔다 */
+ pushProfile({name:savedName(),bio:me.bio,seal:me.seal,cover:me.cover,onboarded:true});
  $('#auth').classList.add('hidden');$$('.app > :not(#landing):not(#auth)').forEach(e=>e.inert=false);
  goto('home')}
 $('#enter-app').onclick=()=>{if(me.onboarded){goto('home');$('.app-header .logo')?.focus()}else startAuth()};

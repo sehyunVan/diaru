@@ -32,13 +32,13 @@ const RESERVED = ['diaru', 'admin', 'root', 'me', 'official', 'support', 'help']
 const CODE_TTL = 10 * 60e3;        // 코드 10분
 const SESSION_TTL = 90 * 864e5;    // 세션 90일
 const MAX_TRIES = 5;               // 코드 입력 5번
-const MAX_CODES_PER_HOUR = 5;
+const MAX_CODES_PER_HOUR = 8;
 
 /* ── 저장 ───────────────────────────────────────────── */
 const db = load();
 function load() {
   try { return JSON.parse(fs.readFileSync(DATA, 'utf8')); }
-  catch { return { users: {}, byEmail: {}, byHandle: {}, codes: {}, sessions: {} }; }
+  catch { return { users: {}, byEmail: {}, byHandle: {}, codes: {}, sessions: {}, diaries: {} }; }
 }
 let flushing = null;
 function save() {
@@ -50,6 +50,45 @@ function save() {
     fs.writeFileSync(tmp, JSON.stringify(db));
     fs.renameSync(tmp, DATA);   // 원자적 교체 — 쓰다 죽어도 반쪽 파일이 남지 않는다
   }, 120);
+}
+
+const DIARY_DIR = path.join(path.dirname(DATA), 'diaries');
+const safeId = id => String(id || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
+const diaryPath = (owner, id) => path.join(DIARY_DIR, owner, safeId(id) + '.json');
+function readDiary(owner, id) { try { return JSON.parse(fs.readFileSync(diaryPath(owner, id), 'utf8')); } catch { return null; } }
+function writeDiary(owner, id, body) {
+  fs.mkdirSync(path.join(DIARY_DIR, owner), { recursive: true });
+  const p = diaryPath(owner, id);
+  fs.writeFileSync(p + '.tmp', JSON.stringify(body));
+  fs.renameSync(p + '.tmp', p);
+}
+function dropDiary(owner, id) { try { fs.unlinkSync(diaryPath(owner, id)); } catch {} }
+const cardOfDiary = (id, rec) => ({ id, title: rec.title, date: rec.date, shared: !!rec.shared });
+/* 마음과 댓글은 본문과 따로 둔다 — 본문은 사진이 커서 자주 다시 쓰면 손해다 */
+const heartsOf = id => (db.hearts = db.hearts || {})[id] || (db.hearts[id] = []);
+const commentsOf = id => (db.comments = db.comments || {})[id] || (db.comments[id] = []);
+/* 알림 — 받은 사람 쪽에 쌓인다. 내가 한 일은 알리지 않는다. */
+function notify(uid, notice) {
+  if (!uid) return;
+  const list = (db.notices = db.notices || {})[uid] || (db.notices[uid] = []);
+  list.unshift({ ...notice, at: now(), seen: false });
+  if (list.length > 60) list.length = 60;
+}
+const noticeFrom = me => ({ by: me.handle, byName: me.name || '' });
+
+function reactions(id, me) {
+  const h = heartsOf(id), c = commentsOf(id);
+  return { hearts: h.length, hearted: h.includes(me.handle), comments: c.length };
+}
+/* 볼 수 있는 사람 = 주인이거나, 친구 공개인 기록의 친구 */
+function mayTouch(me, id) {
+  const rec = (db.diaries || {})[id];
+  if (!rec) return null;
+  if (rec.owner === me.id) return rec;
+  const owner = db.users[rec.owner];
+  if (!owner || !rec.shared) return null;
+  if (!owner.friends.includes(me.handle) || me.blocked.includes(owner.handle) || owner.blocked.includes(me.handle)) return null;
+  return rec;
 }
 
 const sha = s => crypto.createHash('sha256').update(String(s)).digest('hex');
@@ -115,6 +154,10 @@ const routes = {
     rec.count++; rec.hash = sha(email + code); rec.expires = now() + CODE_TTL; rec.tries = 0;
     save();
     const how = await sendCode(email, code);
+    if (how === 'failed') {   /* 보내지 못했으면 보냈다고 하지 않는다 — 기다리게 만드는 게 제일 나쁘다 */
+      rec.count--; delete rec.hash;
+      return [502, { error: '메일을 보내지 못했어요. 주소를 확인하고 다시 시도해주세요.' }];
+    }
     return { sent: true, how, ...(DEV ? { code } : {}) };
   },
 
@@ -157,6 +200,7 @@ const routes = {
       };
       db.byEmail[email] = uid; db.byHandle[handle] = uid;
     }
+    rec.count = 0;   /* 들어왔으면 셈을 되돌린다 */
     const token = id(32);
     db.sessions[token] = { user: user.id, expires: now() + SESSION_TTL };
     save();
@@ -170,10 +214,14 @@ const routes = {
       const u = db.users[uid]; if (!u || u.id === me.id) continue;
       ['friends', 'sent', 'incoming', 'blocked'].forEach(k => pull(u[k], me.handle));
     }
+    for (const [id, rec] of Object.entries(db.diaries || {})) if (rec.owner === me.id) { dropDiary(me.id, id); delete db.diaries[id]; if (db.hearts) delete db.hearts[id]; if (db.comments) delete db.comments[id]; }
+    try { fs.rmSync(path.join(DIARY_DIR, me.id), { recursive: true, force: true }); } catch {}
     delete db.byHandle[me.handle];
     delete db.byEmail[me.email];
     delete db.users[me.id];
     for (const [token, s] of Object.entries(db.sessions)) if (s.user === me.id) delete db.sessions[token];
+    if (db.notices) delete db.notices[me.id];
+    delete db.codes[me.email];   /* 지운 메일은 코드 셈도 새로 */
     save();
     return { gone: true };
   },
@@ -231,6 +279,117 @@ const routes = {
     return { people: out };
   },
 
+  'GET /api/diaries': async (req) => {
+    const me = userOf(req); if (!me) return [401, { error: '로그인이 필요해요.' }];
+    const out = [];
+    for (const [id, rec] of Object.entries(db.diaries || {})) {
+      if (rec.owner !== me.id) continue;
+      const body = readDiary(me.id, id);
+      if (body) out.push({ ...body, ...reactions(id, me) });
+    }
+    out.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+    return { diaries: out };
+  },
+
+  'POST /api/diaries': async (req, body) => {
+    const me = userOf(req); if (!me) return [401, { error: '로그인이 필요해요.' }];
+    const d = body.diary;
+    if (!d || typeof d !== 'object' || !safeId(d.id)) return [400, { error: '기록을 읽지 못했어요.' }];
+    const id = safeId(d.id);
+    db.diaries = db.diaries || {};
+    const old = db.diaries[id];
+    if (old && old.owner !== me.id) return [403, { error: '남의 기록이에요.' }];
+    const clean = { ...d, id };
+    writeDiary(me.id, id, clean);
+    db.diaries[id] = { owner: me.id, title: String(d.title || ''), date: String(d.date || ''), shared: !!d.shared, updated: now() };
+    save();
+    return { diary: cardOfDiary(id, db.diaries[id]) };
+  },
+
+  'POST /api/diaries/delete': async (req, body) => {
+    const me = userOf(req); if (!me) return [401, { error: '로그인이 필요해요.' }];
+    const id = safeId(body.id);
+    const rec = (db.diaries || {})[id];
+    if (!rec || rec.owner !== me.id) return [404, { error: '그런 기록이 없어요.' }];
+    dropDiary(me.id, id); delete db.diaries[id];
+    if (db.hearts) delete db.hearts[id];
+    if (db.comments) delete db.comments[id];
+    save();
+    return { gone: true };
+  },
+
+  'POST /api/diaries/heart': async (req, body) => {
+    const me = userOf(req); if (!me) return [401, { error: '로그인이 필요해요.' }];
+    const id = safeId(body.id);
+    if (!mayTouch(me, id)) return [403, { error: '볼 수 없는 기록이에요.' }];
+    const rec = db.diaries[id];
+    const h = heartsOf(id), i = h.indexOf(me.handle);
+    if (i >= 0) h.splice(i, 1);
+    else { h.unshift(me.handle); if (rec.owner !== me.id) notify(rec.owner, { kind: 'heart', ...noticeFrom(me), diary: id, title: rec.title }); }
+    save();
+    return reactions(id, me);
+  },
+
+  'GET /api/diaries/comments': async (req, body, url) => {
+    const me = userOf(req); if (!me) return [401, { error: '로그인이 필요해요.' }];
+    const id = safeId(url.searchParams.get('id'));
+    if (!mayTouch(me, id)) return [403, { error: '볼 수 없는 기록이에요.' }];
+    return { ...reactions(id, me), list: commentsOf(id).slice(0, 200), mine: me.handle };
+  },
+
+  'POST /api/diaries/comment': async (req, body) => {
+    const me = userOf(req); if (!me) return [401, { error: '로그인이 필요해요.' }];
+    const id = safeId(body.id), text = String(body.text || '').trim().slice(0, 300);
+    if (!text) return [400, { error: '할 말을 적어주세요.' }];
+    const rec = mayTouch(me, id); if (!rec) return [403, { error: '볼 수 없는 기록이에요.' }];
+    const list = commentsOf(id);
+    list.unshift({ by: me.handle, name: me.name || '', text, at: now() });
+    if (list.length > 200) list.length = 200;
+    if (rec.owner !== me.id) notify(rec.owner, { kind: 'comment', ...noticeFrom(me), diary: id, title: rec.title, text });
+    save();
+    return { ...reactions(id, me), list, mine: me.handle };
+  },
+
+  'POST /api/diaries/comment/delete': async (req, body) => {
+    const me = userOf(req); if (!me) return [401, { error: '로그인이 필요해요.' }];
+    const id = safeId(body.id), at = Number(body.at);
+    const rec = (db.diaries || {})[id]; if (!rec) return [404, { error: '그런 기록이 없어요.' }];
+    const list = commentsOf(id), i = list.findIndex(c => c.at === at);
+    if (i < 0) return [404, { error: '그런 말이 없어요.' }];
+    if (list[i].by !== me.handle && rec.owner !== me.id) return [403, { error: '지울 수 없어요.' }];
+    list.splice(i, 1); save();
+    return { ...reactions(id, me), list, mine: me.handle };
+  },
+
+  'GET /api/feed': async (req) => {
+    const me = userOf(req); if (!me) return [401, { error: '로그인이 필요해요.' }];
+    const out = [];
+    for (const hd of me.friends || []) {
+      const friend = db.users[db.byHandle[hd]];
+      if (!friend || me.blocked.includes(hd) || friend.blocked.includes(me.handle)) continue;
+      for (const [id, rec] of Object.entries(db.diaries || {})) {
+        if (rec.owner !== friend.id || !rec.shared) continue;
+        const body = readDiary(friend.id, id);
+        if (body) out.push({ ...body, author: { handle: friend.handle, name: friend.name }, ...reactions(id, me) });
+      }
+    }
+    out.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+    return { feed: out.slice(0, 40) };
+  },
+
+  'GET /api/notices': async (req) => {
+    const me = userOf(req); if (!me) return [401, { error: '로그인이 필요해요.' }];
+    const list = (db.notices || {})[me.id] || [];
+    return { notices: list.slice(0, 40), unseen: list.filter(n => !n.seen).length };
+  },
+
+  'POST /api/notices/seen': async (req) => {
+    const me = userOf(req); if (!me) return [401, { error: '로그인이 필요해요.' }];
+    ((db.notices || {})[me.id] || []).forEach(n => { n.seen = true; });
+    save();
+    return { unseen: 0 };
+  },
+
   'GET /api/friends': async (req) => {
     const me = userOf(req); if (!me) return [401, { error: '로그인이 필요해요.' }];
     const card = hd => { const u = db.users[db.byHandle[hd]]; return u ? { handle: u.handle, name: u.name } : null; };
@@ -249,10 +408,14 @@ const routes = {
     if (me.friends.includes(other.handle)) return { relation: 'friend' };
     if (me.incoming.includes(other.handle)) {   // 서로 보냈으면 바로 친구
       pull(me.incoming, other.handle); pull(other.sent, me.handle);
-      push(me.friends, other.handle); push(other.friends, me.handle); save();
+      push(me.friends, other.handle); push(other.friends, me.handle);
+      notify(other.id, { kind: 'accept', ...noticeFrom(me) });
+      save();
       return { relation: 'friend' };
     }
-    push(me.sent, other.handle); push(other.incoming, me.handle); save();
+    push(me.sent, other.handle); push(other.incoming, me.handle);
+    notify(other.id, { kind: 'request', ...noticeFrom(me) });
+    save();
     return { relation: 'sent' };
   },
 
@@ -262,7 +425,9 @@ const routes = {
     if (!other) return [404, { error: '그런 사람이 없어요.' }];
     if (!me.incoming.includes(other.handle)) return [400, { error: '받은 신청이 없어요.' }];
     pull(me.incoming, other.handle); pull(other.sent, me.handle);
-    push(me.friends, other.handle); push(other.friends, me.handle); save();
+    push(me.friends, other.handle); push(other.friends, me.handle);
+    notify(other.id, { kind: 'accept', ...noticeFrom(me) });
+    save();
     return { relation: 'friend' };
   },
 
@@ -332,7 +497,8 @@ const server = http.createServer(async (req, res) => {
   let body = {};
   if (req.method !== 'GET') {
     const chunks = []; let size = 0;
-    for await (const c of req) { size += c.length; if (size > 1.2e6) { res.writeHead(413).end(); return; } chunks.push(c); }
+    const cap = url.pathname.startsWith('/api/diaries') ? 9e6 : 1.2e6;
+    for await (const c of req) { size += c.length; if (size > cap) { res.writeHead(413).end(); return; } chunks.push(c); }
     try { body = chunks.length ? JSON.parse(Buffer.concat(chunks).toString('utf8')) : {}; }
     catch { res.writeHead(400, { 'Content-Type': 'application/json' }).end(JSON.stringify({ error: '본문을 읽지 못했어요.' })); return; }
   }

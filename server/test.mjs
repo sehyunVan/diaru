@@ -108,7 +108,59 @@ const saved = JSON.parse(fs.readFileSync(DATA, 'utf8'));
 ok(Object.keys(saved.users).length === 4 && saved.byHandle.sehyun && saved.byHandle.root, '파일에 그대로 남는다(실험용 포함)');
 ok((await call('POST', '/api/auth/logout', {}, A)).json.ok && (await call('GET', '/api/me', null, A)).status === 401, '로그아웃하면 토큰이 죽는다');
 
-/* 계정 삭제 — A 는 위에서 로그아웃했으므로 새 세션으로 본다 */
+/* 다이어리 — 계정에 붙는다 */
+const A3 = (await login('a@example.com')).token;   /* A 는 위에서 로그아웃했다 */
+const myDiary = { id: 'd-1', title: '오늘의 기록', date: '2026.10.21', shared: false, items: [{ type: 'text', content: '안녕', x: 10, y: 10 }] };
+ok((await call('POST', '/api/diaries', { diary: myDiary }, A3)).json.diary?.id === 'd-1', '기록 올리기');
+ok((await call('GET', '/api/diaries', null, A3)).json.diaries.length === 1, '내 기록만 돌아온다');
+ok((await call('GET', '/api/diaries', null, B)).json.diaries.length === 0, '남의 계정에는 안 보인다');
+ok((await call('POST', '/api/diaries', { diary: { ...myDiary, title: '고친 제목' } }, A3)).status === 200, '같은 id 로 덮어쓰기');
+ok((await call('GET', '/api/diaries', null, A3)).json.diaries[0].title === '고친 제목', '덮어쓴 내용이 돌아온다');
+ok((await call('POST', '/api/diaries', { diary: { ...myDiary, title: '뺏기' } }, B)).status === 403, '남의 기록은 못 덮는다');
+
+/* 친구 공개만 피드에 */
+ok((await call('GET', '/api/feed', null, B)).json.feed.length === 0, '나만 보기는 친구에게 안 간다');
+await call('POST', '/api/diaries', { diary: { ...myDiary, id: 'd-2', title: '친구 공개', shared: true } }, A3);
+const feed = await call('GET', '/api/feed', null, B);
+ok(feed.json.feed.length === 1 && feed.json.feed[0].author.handle === 'sehyun', '친구 공개는 친구 피드에 뜬다');
+ok(feed.json.feed[0].items.length === 1, '조각까지 그대로 온다');
+const C2 = (await login('stranger@example.com')).token;
+await call('PATCH', '/api/me', { handle: 'stranger', onboarded: true }, C2);
+ok((await call('GET', '/api/feed', null, C2)).json.feed.length === 0, '친구가 아니면 못 본다');
+ok((await call('POST', '/api/diaries/delete', { id: 'd-2' }, A3)).json.gone === true, '기록 지우기');
+ok((await call('GET', '/api/diaries', null, A3)).json.diaries.length === 1, '지운 뒤 하나 남는다');
+
+/* 마음과 댓글 */
+await call('POST', '/api/diaries', { diary: { ...myDiary, id: 'd-3', title: '같이 보는 기록', shared: true } }, A3);
+ok((await call('POST', '/api/diaries/heart', { id: 'd-3' }, B)).json.hearts === 1, '친구가 마음을 찍는다');
+ok((await call('POST', '/api/diaries/heart', { id: 'd-3' }, B)).json.hearts === 0, '다시 누르면 거둔다');
+await call('POST', '/api/diaries/heart', { id: 'd-3' }, B);
+ok((await call('GET', '/api/feed', null, B)).json.feed.find(d => d.id === 'd-3')?.hearted === true, '내가 찍었는지도 온다');
+ok((await call('GET', '/api/diaries', null, A3)).json.diaries.find(d => d.id === 'd-3')?.hearts === 1, '주인도 받은 마음을 본다');
+ok((await call('POST', '/api/diaries/heart', { id: 'd-3' }, C2)).status === 403, '친구가 아니면 못 찍는다');
+ok((await call('POST', '/api/diaries/heart', { id: 'd-1' }, B)).status === 403, '나만 보기 기록에도 못 찍는다');
+
+const said = await call('POST', '/api/diaries/comment', { id: 'd-3', text: '여기 좋다' }, B);
+ok(said.json.list?.[0]?.text === '여기 좋다' && said.json.comments === 1, '댓글 달기');
+ok((await call('POST', '/api/diaries/comment', { id: 'd-3', text: '  ' }, B)).status === 400, '빈 댓글은 거절');
+ok((await call('GET', '/api/diaries/comments?id=d-3', null, A3)).json.list.length === 1, '주인도 댓글을 읽는다');
+ok((await call('GET', '/api/diaries/comments?id=d-3', null, C2)).status === 403, '남은 못 읽는다');
+const at = said.json.list[0].at;
+ok((await call('POST', '/api/diaries/comment/delete', { id: 'd-3', at }, C2)).status >= 400, '남의 댓글은 못 지운다');
+ok((await call('POST', '/api/diaries/comment/delete', { id: 'd-3', at }, A3)).json.comments === 0, '주인은 지울 수 있다');
+
+/* 알림 */
+const mail = await call('GET', '/api/notices', null, A3);
+ok(mail.json.notices.some(n => n.kind === 'heart' && n.by === 'bomi'), '마음 받은 알림');
+ok(mail.json.notices.some(n => n.kind === 'comment'), '댓글 받은 알림');
+ok(mail.json.unseen >= 2, '안 본 알림 수');
+ok(!(await call('GET', '/api/notices', null, B)).json.notices.some(n => n.kind === 'heart'), '내가 찍은 건 나에게 안 온다');
+ok((await call('GET', '/api/notices', null, B)).json.notices.some(n => n.kind === 'request' && n.by === 'sehyun'), '받은 신청도 알림으로');
+ok((await call('GET', '/api/notices', null, A3)).json.notices.some(n => n.kind === 'accept'), '수락 알림은 신청한 쪽에');
+ok((await call('POST', '/api/notices/seen', {}, A3)).json.unseen === 0, '읽음 표시');
+ok((await call('GET', '/api/notices', null, A3)).json.unseen === 0, '읽고 나면 0');
+
+/* 계정 삭제 — A 는 로그아웃했으므로 새 세션으로 본다 */
 const A2 = (await login('a@example.com')).token;
 const gone = await login('gone@example.com');
 await call('PATCH', '/api/me', { handle: 'goner', onboarded: true }, gone.token);
