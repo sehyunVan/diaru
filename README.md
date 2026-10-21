@@ -81,9 +81,10 @@ tar -czf /tmp/diaru.tgz dist server
 scp /tmp/diaru.tgz blr:/tmp/ && ssh blr 'cd /opt/diaru && tar -xzf /tmp/diaru.tgz && systemctl restart diaru'
 ```
 
-- **메일이 아직 안 붙었다.** 코드는 서버 기록에만 남는다 — `journalctl -u diaru -f` 에서
-  `[코드] you@… → 123456` 를 보고 넣으면 된다. `RESEND_API_KEY` 와 `MAIL_FROM` 을
-  서비스 파일에 넣고 `systemctl restart diaru` 하면 진짜 메일로 나간다.
+- **메일은 Resend 로 나간다**(2026-10-21 연결). 키와 보내는 주소는 박스의 `/etc/diaru.env`(600) 에 있고
+  서비스가 `EnvironmentFile` 로 읽는다. 보내는 이는 `Diaru <noreply@copycat.sarl>` — 이미 확인된 도메인이라
+  그대로 빌려 쓴다. 나중에 diaru 도메인을 Resend 에 올리면 그 줄만 바꾸면 된다.
+  키가 비면 코드는 서버 기록에만 남고(`journalctl -u diaru -f`) 화면도 그렇게 말한다.
 - **실험용 계정이 켜져 있다**: `root@diaru.app` / `000000` / `@root`.
   주소를 아는 사람은 누구나 들어올 수 있다 — 쓸 일이 끝나면 서비스 파일의
   `DEMO_EMAIL`·`DEMO_CODE` 두 줄을 지우고 재시작한다.

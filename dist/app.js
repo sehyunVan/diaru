@@ -638,7 +638,7 @@ function adoptAccount(acc){
 async function pushProfile(patch){if(!API.on||!API.token)return;
  try{await api('PATCH','api/me',patch)}catch(e){toast(e.message)}}
 async function connectServer(){
- try{const r=await fetch('api/health',{cache:'no-store'});if(!r.ok)return false;API.on=true}catch{return false}
+ try{const r=await fetch('api/health',{cache:'no-store',signal:AbortSignal.timeout(4500)});if(!r.ok)return false;API.on=true}catch{return false}
  if(API.token){try{adoptAccount((await api('GET','api/me')).me)}
   catch{API.token=null;try{localStorage.removeItem('diaru-token')}catch{}}}
  return true}
@@ -653,7 +653,10 @@ function renderAuthPreview(){const seal=$('#auth-seal');if(!seal)return;
  const img=$('#auth-cover-img'),has=typeof me.cover==='string'&&me.cover.startsWith('data:');
  img.src=has?me.cover:(photos[me.cover]||photos.harbor);
  $('#auth-cover').classList.toggle('filled',has)}
-function startAuth(){$('#landing').classList.add('hidden');$('#auth').classList.remove('hidden');$('#auth').inert=false;
+async function startAuth(){
+ /* 서버에 묻는 중에 눌리면 이메일 단계를 통째로 건너뛴다 — 끝날 때까지 기다린다 */
+ await Promise.race([SERVER_READY,new Promise(r=>setTimeout(r,4600))]);
+ $('#landing').classList.add('hidden');$('#auth').classList.remove('hidden');$('#auth').inert=false;
  $$('.app > :not(#landing):not(#auth)').forEach(e=>e.inert=true);
  if(API.on){showAuthStep('auth-email');$('#auth-email-input').value=API.email;
   setTimeout(()=>$('#auth-email-input').focus(),60);return}
@@ -710,7 +713,7 @@ $('#auth-done').onclick=()=>{const name=$('#auth-name-input').value.trim().slice
 $('#auth-skip').onclick=finishAuth;
 $$('.app > :not(#landing)').forEach(e=>e.inert=true);
 renderDiaries();renderPapers();renderStickers();renderEditorStickers();renderPeople();renderProfile();
-connectServer().then(on=>{if(on)console.log('서버에 연결됨')});
+var SERVER_READY=connectServer();
 
 
 

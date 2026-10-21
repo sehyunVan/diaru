@@ -64,9 +64,15 @@ async function sendCode(email, code) {
     method: 'POST',
     headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from, to: email, subject: `Diaru 로그인 코드 ${code}`,
-      text: `Diaru 로그인 코드는 ${code} 입니다. 10분 안에 입력해주세요.\n본인이 요청하지 않았다면 무시해도 됩니다.`,
+      from, to: [email], subject: `Diaru 확인 코드 ${code}`,
+      text: `확인 코드 ${code}\n\nDiaru 앱에 이 코드를 넣어 주세요. 10분 동안 쓸 수 있어요.\n본인이 요청하지 않았다면 그냥 두셔도 됩니다.`,
+      html: `<div style="font-family:system-ui,-apple-system,sans-serif;background:#fdfaf4;padding:32px 24px;color:#2a3a57">`
+        + `<p style="margin:0 0 18px;font-size:13px;color:#8b8274">Diaru</p>`
+        + `<p style="margin:0 0 10px;font-size:14px">확인 코드예요.</p>`
+        + `<p style="margin:0 0 18px;font-size:34px;letter-spacing:9px;font-weight:700">${code}</p>`
+        + `<p style="margin:0;font-size:12px;color:#8b8274">10분 동안 쓸 수 있어요. 본인이 요청하지 않았다면 그냥 두셔도 됩니다.</p></div>`,
     }),
+    signal: AbortSignal.timeout(10000),
   });
   if (!r.ok) { console.log('[메일 실패]', r.status, (await r.text()).slice(0, 200)); return 'failed'; }
   return 'sent';
