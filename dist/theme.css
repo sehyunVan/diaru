@@ -152,3 +152,26 @@ body{font-family:'Noto Sans KR',sans-serif;background:#eeede9;-webkit-font-smoot
 .paper-area,.edit-hint{background:#eeede8}.editor-tools{background:var(--ivory)}.editor-tools button{font-size:10px;font-weight:400}.editor-drawer{border-radius:18px 18px 0 0}
 .drawer-title>button{background:transparent}.storage-note,.home-footnote{font-size:10px;color:#90948a}
 @media(max-width:370px){.page{padding-left:18px;padding-right:18px}.app-header{padding-left:18px;padding-right:18px}.today-message{left:20px;top:69px;font-size:21px;max-width:none;width:80%}.today-date,.today-link{left:20px}.today-photo{width:100%;right:0}.profile-cover{margin-left:-18px;margin-right:-18px}.quick-actions b{font-size:9px}}
+
+/* Welcome: one photograph, one wordmark, one clear action. */
+#landing{background:#faf9f6;color:var(--navy)}
+#landing:after,.landing-spark,.landing-collage,.landing-flora,.landing-cat,.landing-heart,.landing-logo span,.landing-footer svg,.landing-cta:before,.landing-cta:after{display:none}
+.landing-body{min-height:540px;height:100%;padding:0}
+.landing-header{top:max(24px,env(safe-area-inset-top));left:26px;right:22px;align-items:center}
+.landing-note{font-family:'Noto Sans KR',sans-serif;font-size:10px;font-weight:400;letter-spacing:.2px;line-height:1.7;transform:none;color:#7e8584;margin:0;text-shadow:none}
+.landing-note svg{display:none}
+.landing-actions{color:#59666c;gap:0}.landing-actions button{width:40px;height:40px}
+.landing-actions svg{width:20px;height:20px;stroke-width:1.4}.landing-actions .landing-avatar{width:29px;height:29px;border:1px solid #e3e4dd;box-shadow:none;margin-left:8px}
+.landing-actions button:hover{background:#eeeee8;transform:none}
+.landing-sky{z-index:0;inset:94px 24px auto;height:49%;border-radius:4px;overflow:hidden}
+.landing-sky img{height:100%;object-fit:cover;object-position:center 32%;filter:saturate(.65)}
+.landing-sky:after{background:linear-gradient(180deg,#ffffff00 65%,#344b5210)}
+.landing-title{top:calc(49% + 113px);left:28px;right:28px;text-align:left}
+.landing-logo{font-family:'Nanum Pen Script',cursive;font-size:66px;font-weight:400;letter-spacing:-1px;line-height:1;color:var(--navy)}
+.landing-footer{top:calc(49% + 187px);left:29px;right:24px;text-align:left;color:#7c8482}
+.landing-footer p{font-family:'Noto Sans KR',sans-serif;font-size:11px;line-height:1.7;letter-spacing:0}
+.landing-cta{top:auto;left:24px;right:24px;bottom:calc(30px + env(safe-area-inset-bottom))}
+.landing-start{border:0;background:var(--navy);border-radius:12px;box-shadow:none;padding:17px 21px;min-height:56px;font-size:13px;font-weight:500;letter-spacing:0;justify-content:space-between;gap:0}
+.landing-start>svg{display:none}.landing-start>span:last-child{font-size:21px;font-weight:400}.landing-start:hover{background:#3c4c60;box-shadow:none;transform:translateY(-1px)}
+@media(max-height:700px){.landing-sky{top:82px;height:42%}.landing-title{top:calc(42% + 98px)}.landing-logo{font-size:58px}.landing-footer{top:calc(42% + 160px)}.landing-cta{bottom:22px}.landing-start{min-height:50px;padding:14px 20px}}
+@media(prefers-reduced-motion:reduce){.landing-start:hover{transform:none}}

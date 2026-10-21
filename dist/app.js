@@ -203,7 +203,86 @@ $('#add-ink').onclick=()=>setInkMode(!inkMode);
  paper.addEventListener('pointerup',end,true);
  paper.addEventListener('pointercancel',end,true)})();
 $('#add-text').onclick=()=>{placePiece({type:'text',content:'나의 이야기를 적어보세요',x:60,y:350});toast('글을 두 번 눌러 수정해요.')};$('#show-stickers').onclick=()=>openDrawer('stickers');$('#show-papers').onclick=()=>openDrawer('papers');$('#close-drawer').onclick=()=>$('#editor-drawer').classList.add('hidden');$('#add-photo').onclick=()=>$('#photo-input').click();$('#quick-photo').onclick=()=>{openEditor();$('#photo-input').click()};$('#quick-share').onclick=()=>{openEditor(diaries[0]||null);toast('오른쪽 위 내려받기를 누르면 이미지로 저장돼요.')};
-$('#photo-input').onchange=e=>{const file=e.target.files[0];if(!file)return;if(!file.type.startsWith('image/')){toast('이미지 파일을 선택해주세요.');return}const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas'),r=Math.min(1,1100/img.width,1100/img.height);c.width=img.width*r;c.height=img.height*r;c.getContext('2d').drawImage(img,0,0,c.width,c.height);placePiece({type:'photo',content:c.toDataURL('image/jpeg',.82),x:150,y:200,w:250,h:260});toast('사진을 추가했어요.')};img.onerror=()=>toast('JPG 또는 PNG 사진으로 다시 시도해주세요.');img.src=reader.result};reader.readAsDataURL(file);e.target.value=''};$('#delete-item').onclick=()=>{if(selected){selected.remove();selectPiece(null);dirty=true}else toast('삭제할 조각을 먼저 눌러주세요.')};
+/* ── 사진 여러 장 → 자동 배치 ─────────────────────────
+   견본을 깔지 않는다. 무작위로 배치를 수백 번 만들어 점수를 매기고 가장 높은 것을 쓴다.
+   점수: 종이를 적당히 채웠는가(너무 비어도 너무 꽉 차도 감점) · 겹치지 않는가 ·
+         여백이 한쪽으로 쏠리지 않는가 · 크기와 기울기가 지루하지 않은가. */
+function shrinkPhoto(file){return new Promise((ok,no)=>{
+ if(!file.type.startsWith('image/'))return no(new Error('image'));
+ const reader=new FileReader();
+ reader.onload=()=>{const img=new Image();
+  img.onload=()=>{const c=document.createElement('canvas'),r=Math.min(1,1100/img.width,1100/img.height);
+   c.width=img.width*r;c.height=img.height*r;c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+   ok({src:c.toDataURL('image/jpeg',.82),ratio:img.width/img.height})};
+  img.onerror=no;img.src=reader.result};
+ reader.onerror=no;reader.readAsDataURL(file)})}
+
+function layoutScore(boxes,W,H){
+ let area=0,overlap=0,out=0,cx=0,cy=0;
+ for(const b of boxes){area+=b.w*b.h;cx+=(b.x+b.w/2)*b.w*b.h;cy+=(b.y+b.h/2)*b.w*b.h;
+  out+=Math.max(0,-b.x)+Math.max(0,-b.y)+Math.max(0,b.x+b.w-W)+Math.max(0,b.y+b.h-H)}
+ cx/=area||1;cy/=area||1;
+ for(let i=0;i<boxes.length;i++)for(let j=i+1;j<boxes.length;j++){
+  const A=boxes[i],B=boxes[j];
+  const ox=Math.max(0,Math.min(A.x+A.w,B.x+B.w)-Math.max(A.x,B.x));
+  const oy=Math.max(0,Math.min(A.y+A.h,B.y+B.h)-Math.max(A.y,B.y));
+  overlap+=ox*oy}
+ const fill=area/(W*H);
+ const sizes=boxes.map(b=>b.w*b.h);
+ const variety=boxes.length>1?Math.min(...sizes)/Math.max(...sizes):1;
+ return -Math.abs(fill-0.46)*260          /* 적당히 채우기 */
+        -overlap/(W*H)*900                /* 겹치면 크게 감점 */
+        -out/40                           /* 종이 밖으로 나가면 감점 */
+        -(Math.abs(cx-W/2)+Math.abs(cy-H/2))/26   /* 무게가 한쪽으로 쏠리지 않게 */
+        +(1-Math.abs(variety-0.6))*14}    /* 크기가 조금씩 다른 편이 보기 좋다 */
+
+function layoutCandidate(ratios,W,H,pad){
+ const n=ratios.length,order=[...ratios.keys()];
+ for(let i=order.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[order[i],order[j]]=[order[j],order[i]]}
+ const rows=[],perRow=n<=2?1+(Math.random()<.5?0:1):Math.random()<.5?2:Math.min(3,Math.ceil(n/2));
+ for(let i=0;i<order.length;i+=perRow)rows.push(order.slice(i,i+perRow));
+ const gap=18+Math.random()*26,inner=W-pad*2;
+ /* 먼저 줄마다 실제 크기를 정한다 — 가로로 줄인 만큼 세로도 줄어든다 */
+ const plan=rows.map(()=>({}));
+ rows.forEach((row,ri)=>{
+  const hRow=(H-pad*2-gap*(rows.length-1))/rows.length*(0.78+Math.random()*0.3);
+  const widths=row.map(i=>hRow*ratios[i]);
+  const sum=widths.reduce((s,v)=>s+v,0)+gap*(row.length-1);
+  const k=Math.min(1,(inner*(0.72+Math.random()*0.26))/sum);
+  plan[ri]={widths:widths.map(w=>w*k),h:hRow*k,gap:gap*k}});
+ const total=plan.reduce((s,p)=>s+p.h,0)+gap*(rows.length-1);
+ let y=pad+(H-pad*2-total)/2+(Math.random()-.5)*26;
+ const boxes=[];
+ rows.forEach((row,ri)=>{const P=plan[ri];
+  const sum=P.widths.reduce((s,v)=>s+v,0)+P.gap*(row.length-1);
+  let x=pad+(inner-sum)/2+(Math.random()-.5)*30;
+  row.forEach((i,ci)=>{boxes[i]={x,y:y+(Math.random()-.5)*14,w:P.widths[ci],h:P.h,rot:(Math.random()*2-1)*5.5};
+   x+=P.widths[ci]+P.gap});
+  y+=P.h+gap});
+ return boxes}
+function autoLayout(photos,page){
+ const W=600,H=1000,pad=46,ratios=photos.map(p=>p.ratio||1);
+ let best=null,bestScore=-1e9;
+ for(let t=0;t<320;t++){const c=layoutCandidate(ratios,W,H,pad),s=layoutScore(c,W,H);
+  if(s>bestScore){bestScore=s;best=c}}
+ best.forEach((b,i)=>{
+  addPiece({type:'photo',content:photos[i].src,rotation:Math.round(b.rot),
+   x:Math.round(page*600+b.x),y:Math.round(b.y),w:Math.round(b.w),h:Math.round(b.h+23)})});
+ selectPiece(null);dirty=true;
+ return bestScore}
+
+$('#photo-input').onchange=async e=>{const files=[...e.target.files];e.target.value='';
+ if(!files.length)return;
+ try{
+  if(files.length===1){const p=await shrinkPhoto(files[0]);
+   placePiece({type:'photo',content:p.src,x:150,y:200,w:250,h:260});
+   toast('사진을 추가했어요.');return}
+  toast(files.length+'장을 놓아보는 중…');
+  const photos=[];for(const f of files.slice(0,8))photos.push(await shrinkPhoto(f));
+  autoLayout(photos,activePage);
+  toast(photos.length+'장을 놓았어요. 다시 고르면 다르게 놓아요.')}
+ catch{toast('JPG 또는 PNG 사진으로 다시 시도해주세요.')}};
+$('#delete-item').onclick=()=>{if(selected){selected.remove();selectPiece(null);dirty=true}else toast('삭제할 조각을 먼저 눌러주세요.')};
 const PATTERN={
  ruled:(g,W,H)=>{g.fillStyle='rgba(126,115,99,.22)';for(let y=0;y<H;y+=44)g.fillRect(0,y,W,1.3)},
  dot:(g,W,H)=>{g.fillStyle='rgba(126,115,99,.35)';for(let y=17;y<H;y+=34)for(let x=17;x<W;x+=34){g.beginPath();g.arc(x,y,2,0,7);g.fill()}},
