@@ -388,10 +388,11 @@ window.addEventListener('beforeunload',e=>{if(dirty&&!$('#editor').classList.con
    서버가 생기면 갈아 끼울 자리는 여기다: load/save · findPeople · friendFeed 넷. */
 const RESERVED=['diaru','admin','root','me','official','support','help'];
 const HANDLE_RE=/^[a-z0-9_]{3,15}$/;
-let me;try{me=JSON.parse(localStorage.getItem('diaru-me'))}catch{}
+let me,meSaved=false;try{const raw=localStorage.getItem('diaru-me');meSaved=!!raw;me=JSON.parse(raw)}catch{}
 if(!me||typeof me!=='object')me={};
 if(!HANDLE_RE.test(me.handle||''))me.handle='diaru_'+Math.random().toString(36).slice(2,7);
 if(typeof me.bio!=='string')me.bio='오늘도 예쁜 하루를 모으는 중';
+if(typeof me.onboarded!=='boolean')me.onboarded=meSaved; /* 쓰던 기기면 이미 거친 것으로 본다 */
 if(typeof me.cover!=='string')me.cover='harbor';
 if(!me.seal||typeof me.seal!=='object')me.seal={pack:'hand',sprite:0};
 let social;try{social=JSON.parse(localStorage.getItem('diaru-social'))}catch{}
@@ -572,7 +573,7 @@ $('#seal-input').onchange=e=>{const file=e.target.files[0];e.target.value='';if(
    g.drawImage(img,(img.width-sw)/2,(img.height-sh)/2,sw,sh,0,0,S,S);
    const prev=me.seal;me.seal={src:c.toDataURL('image/jpeg',.85),fit:'cover'};
    try{localStorage.setItem('diaru-me',JSON.stringify(me))}catch{me.seal=prev;return toast('사진이 너무 커요. 다른 사진으로 해주세요.')}
-   renderProfile();toast('인장을 바꿨어요.')};
+   renderProfile();renderAuthPreview();toast('인장을 바꿨어요.')};
   img.onerror=()=>toast('JPG 또는 PNG 사진으로 다시 시도해주세요.');img.src=reader.result};
  reader.readAsDataURL(file)};
 $('#cover-input').onchange=e=>{const file=e.target.files[0];e.target.value='';if(!file)return;
@@ -583,7 +584,7 @@ $('#cover-input').onchange=e=>{const file=e.target.files[0];e.target.value='';if
    g.drawImage(img,(img.width-sw)/2,(img.height-sh)/2,sw,sh,0,0,1000,750);
    const prev=me.cover;me.cover=c.toDataURL('image/jpeg',.8);
    try{localStorage.setItem('diaru-me',JSON.stringify(me))}catch{me.cover=prev;return toast('사진이 너무 커요. 다른 사진으로 해주세요.')}
-   renderProfile();toast('배경화면을 바꿨어요.')};
+   renderProfile();renderAuthPreview();toast('배경화면을 바꿨어요.')};
   img.onerror=()=>toast('JPG 또는 PNG 사진으로 다시 시도해주세요.');img.src=reader.result};
  reader.readAsDataURL(file)};
 saveMe();saveSocial();
@@ -601,7 +602,40 @@ function renderPapers(){['#home-papers','#shop-papers'].forEach(sel=>{const root
   b.onclick=()=>{openEditor();applyPaper(id);dirty=true;toast(name+' 속지로 시작해요.')};root.append(b)})});
  if($('#paper-sku'))$('#paper-sku').textContent=PAPERS.length+' PAPERS'}
 
-$('#enter-app').onclick=()=>{goto('home');$('.app-header .logo').focus()};
+/* ── 가입 ───────────────────────────────────────────
+   계정은 아직 이 기기에만 있다. 서버가 붙으면 startAuth/finishAuth 사이에
+   로그인 한 단계(이메일 코드 등)를 끼우고, me 를 서버가 돌려준 계정으로 바꾸면 된다. */
+function showAuthStep(id){$$('#auth .auth-step').forEach(s=>s.classList.toggle('hidden',s.id!==id))}
+function renderAuthPreview(){const seal=$('#auth-seal');if(!seal)return;
+ seal.replaceChildren(sealNode());
+ const img=$('#auth-cover-img'),has=typeof me.cover==='string'&&me.cover.startsWith('data:');
+ img.src=has?me.cover:(photos[me.cover]||photos.harbor);
+ $('#auth-cover').classList.toggle('filled',has)}
+function startAuth(){$('#landing').classList.add('hidden');$('#auth').classList.remove('hidden');
+ $$('.app > :not(#landing):not(#auth)').forEach(e=>e.inert=true);
+ showAuthStep('auth-handle');
+ $('#auth-handle-input').value=me.handle;$('#auth-hint').classList.remove('bad');
+ setTimeout(()=>$('#auth-handle-input').focus(),60)}
+function finishAuth(){me.onboarded=true;saveMe();renderProfile();
+ $('#auth').classList.add('hidden');$$('.app > :not(#landing):not(#auth)').forEach(e=>e.inert=false);
+ goto('home')}
+$('#enter-app').onclick=()=>{if(me.onboarded){goto('home');$('.app-header .logo')?.focus()}else startAuth()};
+$('#auth-next').onclick=()=>{const hd=$('#auth-handle-input').value.trim().toLowerCase().replace(/^@/,'');
+ const bad=!HANDLE_RE.test(hd)?'영문 소문자·숫자·밑줄 3~15자로 적어주세요'
+  :(RESERVED.includes(hd)||personBy(hd))?'이미 쓰이고 있는 아이디예요':'';
+ $('#auth-hint').textContent=bad||'영문 소문자 · 숫자 · 밑줄 3~15자';
+ $('#auth-hint').classList.toggle('bad',!!bad);
+ if(bad)return;
+ me.handle=hd;saveMe();
+ $('#auth-name-input').value='';renderAuthPreview();showAuthStep('auth-profile')};
+$('#auth-handle-input').oninput=()=>$('#auth-hint').classList.remove('bad');
+$('#auth-handle-input').onkeydown=e=>{if(e.key==='Enter')$('#auth-next').click()};
+$('#auth-seal').onclick=()=>$('#seal-input').click();
+$('#auth-cover').onclick=()=>$('#cover-input').click();
+$('#auth-done').onclick=()=>{const name=$('#auth-name-input').value.trim().slice(0,40);
+ if(name){$('.profile-detail h1').textContent=name;try{localStorage.setItem('diaru-profile-name',name)}catch{}}
+ finishAuth()};
+$('#auth-skip').onclick=finishAuth;
 $$('.app > :not(#landing)').forEach(e=>e.inert=true);
 renderDiaries();renderPapers();renderStickers();renderEditorStickers();renderPeople();renderProfile();
 
