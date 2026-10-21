@@ -163,6 +163,21 @@ const routes = {
     return { token, me: selfCard(user) };
   },
 
+  'DELETE /api/me': async (req) => {
+    const me = userOf(req); if (!me) return [401, { error: '로그인이 필요해요.' }];
+    /* 남의 목록에서도 빼고, 색인과 세션까지 치운다 — 되돌릴 수 없다 */
+    for (const uid of Object.values(db.byHandle)) {
+      const u = db.users[uid]; if (!u || u.id === me.id) continue;
+      ['friends', 'sent', 'incoming', 'blocked'].forEach(k => pull(u[k], me.handle));
+    }
+    delete db.byHandle[me.handle];
+    delete db.byEmail[me.email];
+    delete db.users[me.id];
+    for (const [token, s] of Object.entries(db.sessions)) if (s.user === me.id) delete db.sessions[token];
+    save();
+    return { gone: true };
+  },
+
   'POST /api/auth/logout': async (req) => {
     const token = (req.headers.authorization || '').replace(/^Bearer /, '');
     delete db.sessions[token]; save();
@@ -178,8 +193,9 @@ const routes = {
     const me = userOf(req); if (!me) return [401, { error: '로그인이 필요해요.' }];
     if (body.handle !== undefined) {
       const hd = String(body.handle).trim().toLowerCase().replace(/^@/, '');
-      if (!HANDLE_RE.test(hd)) return [400, { error: '아이디는 영문 소문자·숫자·밑줄 3~15자예요.' }];
-      if (RESERVED.includes(hd)) return [400, { error: '쓸 수 없는 아이디예요.' }];
+      if (hd === me.handle) { /* 제 아이디를 그대로 다시 보낸 것 — 그냥 통과 */ }
+      else if (!HANDLE_RE.test(hd)) return [400, { error: '아이디는 영문 소문자·숫자·밑줄 3~15자예요.' }];
+      else if (RESERVED.includes(hd)) return [400, { error: '쓸 수 없는 아이디예요.' }];
       const owner = db.byHandle[hd];
       if (owner && owner !== me.id) return [409, { error: '이미 쓰이고 있는 아이디예요.' }];
       if (hd !== me.handle) { delete db.byHandle[me.handle]; db.byHandle[hd] = me.id; me.handle = hd; }
@@ -305,7 +321,7 @@ const server = http.createServer(async (req, res) => {
   if (ORIGIN !== 'off') {
     res.setHeader('Access-Control-Allow-Origin', ORIGIN);
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   }
   if (req.method === 'OPTIONS') { res.writeHead(204).end(); return; }
   if (!url.pathname.startsWith('/api/')) return serveStatic(req, res, url.pathname);

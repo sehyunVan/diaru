@@ -34,12 +34,18 @@ let customStickers;try{customStickers=JSON.parse(localStorage.getItem('diaru-sti
 function saveCustom(){try{localStorage.setItem('diaru-stickers-v1',JSON.stringify(customStickers));return true}catch{toast('스티커 보관함이 꽉 찼어요. 쓰지 않는 걸 지워주세요.');return false}}
 function customArt(s){const i=el('img','custom-art');i.src=s.src;i.alt=s.name||'내 스티커';return i}
 function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e}function art(i,cls='',pack='hand'){const a=el('span','art pack-'+(PACK_BY_ID[pack]?pack:'hand')+' '+cls);a.style.setProperty('--sx',(i%4)*100/3+'%');a.style.setProperty('--sy',Math.floor(i/4)*100/3+'%');return a}
-let diaries;try{diaries=JSON.parse(localStorage.getItem('diaru-diaries-v1'))}catch{}if(!Array.isArray(diaries))diaries=[{id:'sample-1',title:'일상 기록',subtitle:'일상',date:'2026.10.20',image:'dusk',paper:'ruled',background:'#fffdf7',shared:false,items:[{type:'photo',content:photos.dusk,x:80,y:120,w:330,h:300},{type:'text',content:'해 지는 걸 끝까지 보고 왔다.\n내일도 같은 자리에 서 있기.',x:80,y:470,font:'gaegu'},{type:'sticker',sprite:2,pack:'hand',x:450,y:150,rotation:-8},{type:'photo',content:photos.clouds,x:680,y:260,w:280,h:300,rotation:4},{type:'sticker',sprite:11,pack:'hand',x:700,y:640}]},{id:'sample-2',title:'제주도 여행',subtitle:'여행',date:'2026.10.16',image:'harbor',paper:'dot',background:'#fffdf7',shared:false,items:[{type:'photo',content:photos.harbor,x:70,y:150,w:360,h:280,rotation:-3},{type:'text',content:'배가 지나간 자리에\n불빛이 한참 남아 있었다.',x:80,y:480,font:'nanum'},{type:'sticker',sprite:13,pack:'retro',x:460,y:190},{type:'photo',content:photos.street,x:660,y:220,w:320,h:250},{type:'sticker',sprite:0,pack:'stamp',x:720,y:560,rotation:6}]},{id:'sample-3',title:'나의 하루하루',subtitle:'취향',date:'2026.10.12',image:'forest',paper:'grid',background:'#fffdf7',shared:false,items:[{type:'photo',content:photos.forest,x:90,y:140,w:300,h:330},{type:'text',content:'나무 사이로 바람이\n한 번 크게 지나갔다.',x:85,y:520,font:'gaegu'},{type:'sticker',sprite:5,pack:'press',x:440,y:200,rotation:-6},{type:'photo',content:photos.garden,x:670,y:300,w:300,h:260},{type:'sticker',sprite:1,pack:'clay',x:690,y:620}]}];
+let diaries;try{diaries=JSON.parse(localStorage.getItem('diaru-diaries-v1'))}catch{}if(!Array.isArray(diaries))diaries=[];
+/* 견본 기록은 두지 않는다 — 가입하고 들어오면 '나의 기록'은 비어 있어야 한다.
+   예전 판에서 깔려 저장된 것이 있으면 여기서 걷어낸다. */
+const kept=diaries.filter(d=>d&&!String(d.id||'').startsWith('sample-'));
+if(kept.length!==diaries.length){diaries=kept;try{localStorage.setItem('diaru-diaries-v1',JSON.stringify(diaries))}catch{}}
+else diaries=kept;
 let current=null,selected=null,dirty=false,scale=1,zoom=1,activePage=0,toastTimer;function toast(m){$('#toast').textContent=m;$('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),2800)}
 function goto(page){$('#landing').classList.add('hidden');$$('.app > :not(#landing)').forEach(e=>e.inert=false);$$('.page').forEach(e=>e.classList.toggle('hidden',e.id!==page));$$('.bottom-nav [data-page]').forEach(e=>e.classList.toggle('active',e.dataset.page===(page==='stickers'?'shop':page)));$('main').scrollTop=0;if(page==='feed')renderFeed();if(page==='notifications'){renderNotifications();$('.notification-button').classList.remove('unread')}}
 $$('[data-page]').forEach(b=>b.onclick=()=>goto(b.dataset.page));$$('[data-goto]').forEach(b=>b.onclick=()=>goto(b.dataset.goto));$('.logo').onclick=e=>{e.preventDefault();goto('home')};
 const shortDate=s=>{const m=/^(\d{4})\.(\d{2})\.(\d{2})$/.exec(s||'');if(!m)return s||'';return m[2]+'.'+m[3]+' ('+'일월화수목금토'[new Date(+m[1],+m[2]-1,+m[3]).getDay()]+')'};
-function renderDiaries(filter='전체'){['#home-diaries','#all-diaries','#profile-diaries'].forEach(target=>{const root=$(target);root.replaceChildren();let list=target==='#all-diaries'?diaries.filter(d=>filter==='전체'||d.subtitle===filter):diaries.slice(0,3);list.forEach(d=>{const card=el('button','diary-card open');card.append(spreadPreview(d),el('p','',shortDate(d.date)),el('h3','',target==='#home-diaries'?(d.subtitle||d.title):d.title));card.onclick=()=>openEditor(d);root.append(card)});if(target!=='#profile-diaries'){const add=el('button','blank');add.setAttribute('aria-label','새 다이어리 만들기');add.append(el('b','','＋'),el('span','','새로운 기록'));add.onclick=()=>openEditor();root.append(add)}});$('#diary-total').textContent=diaries.length;$('#profile-count').textContent=diaries.length;renderFeed()}
+function renderDiaries(filter='전체'){['#home-diaries','#all-diaries','#profile-diaries'].forEach(target=>{const root=$(target);root.replaceChildren();let list=target==='#all-diaries'?diaries.filter(d=>filter==='전체'||d.subtitle===filter):diaries.slice(0,3);list.forEach(d=>{const card=el('button','diary-card open');card.append(spreadPreview(d),el('p','',shortDate(d.date)),el('h3','',target==='#home-diaries'?(d.subtitle||d.title):d.title));card.onclick=()=>openEditor(d);root.append(card)});if(target==='#profile-diaries'&&!list.length){const empty=el('p','storage-note','아직 남긴 기록이 없어요.');root.append(empty)}
+ if(target!=='#profile-diaries'){const add=el('button','blank');add.setAttribute('aria-label','새 다이어리 만들기');add.append(el('b','','＋'),el('span','','새로운 기록'));add.onclick=()=>openEditor();root.append(add)}});$('#diary-total').textContent=diaries.length;$('#profile-count').textContent=diaries.length;renderFeed()}
 $$('.diary-chips button').forEach(b=>b.onclick=()=>{$$('.diary-chips button').forEach(c=>c.classList.toggle('selected',c===b));renderDiaries(b.textContent)});
 let category='전체',stickerPack='손그림'; // 처음엔 한 팩만 — '전체'를 누르면 시트 아홉 장을 한꺼번에 받는다
 function uploadTile(label){const b=el('button','add-sticker');b.append(el('b','','＋'));if(label)b.append(el('small','',label));b.setAttribute('aria-label','사진으로 내 스티커 만들기');b.onclick=()=>$('#sticker-input').click();return b}
@@ -370,92 +376,62 @@ $('#export').onclick=async()=>{const button=$('#export');button.disabled=true;to
   toast('이미지로 저장했어요. ('+(blob.size/1024/1024).toFixed(1)+'MB)')}
  catch{toast('이미지를 만들지 못했어요. 사진을 다시 불러오고 시도해주세요.')}
  finally{button.disabled=false}};
-$('#profile-name-edit').onclick=()=>setProfileEditing(true);$('#profile-bio-edit').onclick=()=>setProfileEditing(true);$('#profile-handle-edit').onclick=()=>setProfileEditing(true);
+$('#profile-name-edit').onclick=()=>setProfileEditing(true);$('#profile-bio-edit').onclick=()=>setProfileEditing(true);
 let feedMode='mine',activity=[];try{activity=JSON.parse(localStorage.getItem('diaru-activity'))||[]}catch{}
 /* 펼친 책 한 장 — 피드·나의 기록·남의 프로필이 같은 그림을 쓴다 */
 function spreadPreview(d){const preview=el('div','feed-spread paper-surface');preview.style.backgroundColor=d.background||'#fffdf7';if(d.paper&&d.paper!=='plain')preview.classList.add('p-'+d.paper);const mini=chromeNode(d.paper,true);if(mini)preview.append(mini);const surface=el('div','feed-surface');(d.items||[]).forEach(item=>{const p=el('div','feed-piece '+item.type);p.dataset.type=item.type;p.style.left=item.x/12+'%';p.style.top=item.y/10+'%';applyPieceStyle(p,{...item});if(item.type==='photo'){const img=el('img');img.src=item.content;img.alt='';p.style.width=(item.w||220)/12+'%';p.style.height=(item.h||190)/10+'%';p.append(img)}else if(item.type==='ink'){p.style.width=(item.w||100)/12+'%';p.style.height=(item.h||100)/10+'%';
   p.innerHTML=inkSvg(item.strokes||[],item.w||100,item.h||100)}
  else if(item.type==='sticker'){p.style.width='7.08%';if(typeof item.src==='string'&&item.src.startsWith('data:')){const im=el('img','custom-art');im.src=item.src;im.alt='';p.append(im)}else p.append(art(item.sprite??2,'',item.pack))}else{p.textContent=item.content;p.style.width=(item.w||540)/12+'%'}surface.append(p)});preview.append(surface);return preview}
-function renderFeed(){if(!$('#feed-list'))return;$('#feed-list').replaceChildren();$('.feed-privacy').textContent=feedMode==='mine'?'나만 보는 기록 · 이 기기에 저장된 다이어리':'친구가 된 사람의 기록만 보여요';const records=feedMode==='mine'?diaries.filter(d=>!String(d.id||'').startsWith('sample-')):friendFeed();if(!records.length){const empty=el('div','empty-state');empty.append(el('span','empty-symbol',feedMode==='mine'?'✎':'♡'),el('h2','',feedMode==='mine'?'첫 번째 이야기를 남겨보세요':'아직 친구가 없어요'),el('p','',feedMode==='mine'?'저장한 다이어리가 이곳에 모여요.':'신청을 보내고 수락되면 친구의 기록이 여기 모여요.'));const b=el('button','primary',feedMode==='mine'?'새 다이어리 만들기':'친구 찾기');b.onclick=()=>feedMode==='mine'?openEditor():goto('people');empty.append(b);$('#feed-list').append(empty);return}records.forEach(d=>{const card=el(d.author?'div':'button','feed-card');const top=el('div','feed-card-top');top.append(el('b','',d.author?d.author.name+' @'+d.author.handle:'나의 기록'),el('small','',d.date+(d.author?' · 친구 공개':d.shared?' · 친구 공개':' · 나만 보기')));const preview=spreadPreview(d);card.append(top,preview,el('h2','',d.title));if(!d.author){card.append(el('span','feed-open','기록 열기 ›'));card.onclick=()=>openEditor(d)}$('#feed-list').append(card)})}
+function renderFeed(){if(!$('#feed-list'))return;$('#feed-list').replaceChildren();$('.feed-privacy').textContent=feedMode==='mine'?'나만 보는 기록 · 이 기기에 저장된 다이어리':'친구가 된 사람의 기록만 보여요';const records=feedMode==='mine'?diaries.filter(d=>!String(d.id||'').startsWith('sample-')):friendFeed();if(!records.length){const empty=el('div','empty-state');empty.append(el('span','empty-symbol',feedMode==='mine'?'✎':'♡'),el('h2','',feedMode==='mine'?'첫 번째 이야기를 남겨보세요':'친구의 기록은 아직 여기 없어요'),el('p','',feedMode==='mine'?'저장한 다이어리가 이곳에 모여요.':'다이어리는 아직 기기에만 저장돼요. 서버로 옮기면 여기 쌓여요.'));const b=el('button','primary',feedMode==='mine'?'새 다이어리 만들기':'친구 찾기');b.onclick=()=>feedMode==='mine'?openEditor():goto('people');empty.append(b);$('#feed-list').append(empty);return}records.forEach(d=>{const card=el(d.author?'div':'button','feed-card');const top=el('div','feed-card-top');top.append(el('b','',d.author?d.author.name+' @'+d.author.handle:'나의 기록'),el('small','',d.date+(d.author?' · 친구 공개':d.shared?' · 친구 공개':' · 나만 보기')));const preview=spreadPreview(d);card.append(top,preview,el('h2','',d.title));if(!d.author){card.append(el('span','feed-open','기록 열기 ›'));card.onclick=()=>openEditor(d)}$('#feed-list').append(card)})}
 $$('[data-feed]').forEach(b=>b.onclick=()=>{feedMode=b.dataset.feed;$$('[data-feed]').forEach(x=>x.classList.toggle('selected',x===b));renderFeed()});
 function recordNotification(d){activity=[{id:d.id,title:d.title,time:new Date().toISOString()},...activity.filter(a=>a.id!==d.id)].slice(0,20);try{localStorage.setItem('diaru-activity',JSON.stringify(activity))}catch{}$('.notification-button').classList.add('unread')}
 function renderNotifications(){$('#notification-list').replaceChildren();if(!activity.length){const empty=el('div','empty-state');empty.append(el('span','empty-symbol','♧'),el('h2','','아직 새로운 알림이 없어요'),el('p','','다이어리를 저장하면 여기에 알려드릴게요.'));$('#notification-list').append(empty);return}activity.forEach(a=>{const b=el('button','notification-item');b.append(el('b','',a.title),el('span','','다이어리를 저장했어요.'),el('small','',new Date(a.time).toLocaleString('ko-KR')));b.onclick=()=>{const d=diaries.find(d=>d.id===a.id);if(d)openEditor(d)};$('#notification-list').append(b)})}
 PACKS.forEach((p,n)=>{const i=[2,0,13,10,12][n%5],b=el('button');b.append(art(i,'',p.id),el('span','',p.name));b.onclick=()=>{openEditor();placePiece({type:'sticker',sprite:i,pack:p.id,content:p.cells[i][0],x:220,y:200})};$('#shop-stickers').append(b)});$('#sticker-sku').textContent=String(PACKS.length*16);
 window.addEventListener('beforeunload',e=>{if(dirty&&!$('#editor').classList.contains('hidden')){e.preventDefault();e.returnValue=''}});
 /* ── 사람들 ─────────────────────────────────────────────
-   규칙: 프로필은 기본 비공개. 서로 팔로우해야 친구가 되고, 친구에게만 소개와 기록이 보인다.
-   다이어리는 그 위에 한 겹 더 — 한 장씩 '나만 보기 / 친구 공개' 를 따로 고른다.
-   서버가 생기면 갈아 끼울 자리는 여기다: load/save · findPeople · friendFeed 넷. */
+   예시 사람은 두지 않는다. 친구는 서버에만 있고, 로그인 전에는 아무도 없다.
+   화면이 보는 것은 rel(내 사이)과 found(마지막 검색 결과) 둘뿐이다. */
 const RESERVED=['diaru','admin','root','me','official','support','help'];
 const HANDLE_RE=/^[a-z0-9_]{3,15}$/;
 let me,meSaved=false;try{const raw=localStorage.getItem('diaru-me');meSaved=!!raw;me=JSON.parse(raw)}catch{}
 if(!me||typeof me!=='object')me={};
 if(!HANDLE_RE.test(me.handle||''))me.handle='diaru_'+Math.random().toString(36).slice(2,7);
 if(typeof me.bio!=='string')me.bio='';
-if(typeof me.onboarded!=='boolean')me.onboarded=meSaved; /* 쓰던 기기면 이미 거친 것으로 본다 */
+if(typeof me.onboarded!=='boolean')me.onboarded=meSaved;
 if(typeof me.cover!=='string')me.cover=null;
 if(me.seal!==null&&typeof me.seal!=='object')me.seal=null;
-let social;try{social=JSON.parse(localStorage.getItem('diaru-social'))}catch{}
-if(!social||typeof social!=='object')social={};
-social.friends=Array.isArray(social.friends)?social.friends:[];
-social.sent=Array.isArray(social.sent)?social.sent:[];
-social.declined=Array.isArray(social.declined)?social.declined:[];
-social.blocked=Array.isArray(social.blocked)?social.blocked:[];
-
 function saveMe(){try{localStorage.setItem('diaru-me',JSON.stringify(me))}catch{}}
-function saveSocial(){try{localStorage.setItem('diaru-social',JSON.stringify(social))}catch{}}
 
-/* 이 기기 안의 사람들. 로그인이 붙으면 서버가 돌려줄 목록이다.
-   followsMe = 그쪽이 나를 팔로우한 상태(맞팔이 되면 친구). */
-const PEOPLE=[
- {handle:'dotgarden',name:'점선',bio:'모눈 아니면 안 써요',avatar:'garden',pack:'ink',paper:'grid',photos:['garden','forest'],line:'연못에 비친 하늘이\n오늘은 더 멀어 보였다.',title:'모눈 위의 오후',date:'2026.10.19',followsMe:true},
- {handle:'nightharbor',name:'밤항구',bio:'불빛만 모읍니다',avatar:'harbor',pack:'retro',paper:'plain',photos:['harbor','street'],line:'배가 지나간 자리에\n불빛이 한참 남아 있었다.',title:'항구에서',date:'2026.10.18',followsMe:false},
- {handle:'cloudpocket',name:'구름주머니',bio:'하늘 보는 게 일',avatar:'clouds',pack:'jelly',paper:'dot',photos:['clouds','sky'],line:'주머니에 구름을 넣어 왔다.\n내일도 꺼내 볼 것.',title:'구름 수집',date:'2026.10.17',followsMe:true},
- {handle:'pixelcat',name:'도트고양이',bio:'길에서 만난 얼굴들',avatar:'cat',pack:'pixel',paper:'graph',photos:['cat','lanterns'],line:'오늘 만난 고양이는\n나를 한참 보다가 갔다.',title:'골목 한 바퀴',date:'2026.10.16',followsMe:false},
- {handle:'slowlantern',name:'느린등',bio:'천천히 걷는 중',avatar:'lanterns',pack:'hand',paper:'ruled',photos:['lanterns','dusk'],line:'등이 하나씩 켜지는 동안\n아무것도 안 했다.',title:'등이 켜질 때',date:'2026.10.15',followsMe:true},
- {handle:'greenweekend',name:'초록주말',bio:'주말엔 숲으로',avatar:'forest',pack:'hand',paper:'dash',photos:['forest','garden'],line:'나무 사이로 바람이\n한 번 크게 지나갔다.',title:'초록빛 주말',date:'2026.10.14',followsMe:false},
-];
-const personBy=hd=>PEOPLE.find(p=>p.handle===hd);
-const PEOPLE_FOLLOWS_ME=new Set(PEOPLE.filter(p=>p.followsMe).map(p=>p.handle));
-if(Array.isArray(social.following)){ /* 옛 저장본: 팔로우 → 보낸 신청(맞팔이던 사이는 친구) */
- social.following.forEach(hd=>{if(PEOPLE_FOLLOWS_ME.has(hd)){if(!social.friends.includes(hd))social.friends.push(hd)}
-  else if(!social.sent.includes(hd))social.sent.push(hd)});
- delete social.following}
-saveSocial(); /* 이사한 결과를 바로 굳힌다 */
-const isBlocked=hd=>social.blocked.includes(hd);
-const isFriend=hd=>!isBlocked(hd)&&social.friends.includes(hd);
-const isSent=hd=>social.sent.includes(hd);                 /* 내가 보낸 신청 — 상대가 수락해야 친구 */
-const isIncoming=hd=>!isBlocked(hd)&&!isFriend(hd)&&!social.declined.includes(hd)&&!!personBy(hd)?.followsMe;
-const drop=(list,hd)=>social[list]=social[list].filter(x=>x!==hd);
-function sendRequest(hd){if(isBlocked(hd)||isFriend(hd))return;
- if(isSent(hd)){drop('sent',hd);saveSocial();afterSocial('신청을 거뒀어요.');return}
- social.sent=[hd,...social.sent];saveSocial();afterSocial('친구 신청을 보냈어요. 상대가 수락하면 친구가 돼요.')}
-function acceptRequest(hd){if(isBlocked(hd))return;
- social.friends=[hd,...social.friends.filter(x=>x!==hd)];drop('sent',hd);drop('declined',hd);saveSocial();
- afterSocial('@'+hd+' 님과 친구가 됐어요.')}
-function declineRequest(hd){social.declined=[hd,...social.declined];drop('sent',hd);saveSocial();afterSocial('신청을 거절했어요.')}
-function unfriend(hd){if(!confirm('@'+hd+' 님과 친구를 끊을까요?'))return;
- drop('friends',hd);social.declined=[hd,...social.declined];saveSocial();afterSocial('친구를 끊었어요.')}
-function toggleBlock(hd){if(isBlocked(hd)){drop('blocked',hd);saveSocial();afterSocial('차단을 풀었어요.');return}
- if(!confirm('@'+hd+' 님을 차단할까요?\n친구 관계와 신청이 모두 풀리고, 서로의 기록이 보이지 않게 돼요.'))return;
- social.blocked=[hd,...social.blocked];drop('friends',hd);drop('sent',hd);saveSocial();afterSocial('@'+hd+' 님을 차단했어요.')}
-function afterSocial(message){renderPeople();renderProfile();renderFeed();if(openPerson)renderPerson(openPerson);toast(message)}
-
-/* 찾기는 아이디와 이름까지만 — 소개는 프로필 안이라 친구에게만 보인다. */
-function findPeople(q){const t=q.trim().toLowerCase().replace(/^@/,'');
- return PEOPLE.filter(p=>!isBlocked(p.handle)&&(!t||p.handle.includes(t)||p.name.toLowerCase().includes(t)))}
-function friendFeed(){return PEOPLE.filter(p=>isFriend(p.handle)).map(p=>({
- id:'fd-'+p.handle,author:{handle:p.handle,name:p.name},title:p.title,date:p.date,background:'#fffdf7',paper:p.paper,shared:true,items:[
- {type:'photo',content:photos[p.photos[0]],x:70,y:120,w:330,h:300},
- {type:'text',content:p.line,x:70,y:470,font:'gaegu'},
- {type:'sticker',sprite:2,pack:p.pack,x:440,y:150,rotation:-8},
- {type:'photo',content:photos[p.photos[1]],x:660,y:280,w:300,h:270,rotation:3},
- {type:'sticker',sprite:13,pack:p.pack,x:700,y:620}]}))}
-
-let peopleTab='검색',openPerson=null;
+let rel={friends:[],incoming:[],sent:[],blocked:[]},found=[],peopleTab='검색',openPerson=null;
 const TABS=['검색','친구','받은 신청','차단'];
-/* 한 줄에 쓰는 관계 상태 — 버튼 글자와 하는 일이 여기서 갈린다 */
-function relation(hd){return isBlocked(hd)?'blocked':isFriend(hd)?'friend':isIncoming(hd)?'incoming':isSent(hd)?'sent':'none'}
+const everyone=()=>[...found,...rel.friends,...rel.incoming,...rel.sent,...rel.blocked];
+const personBy=hd=>everyone().find(p=>p.handle===hd);
+const loggedIn=()=>API.on&&!!API.token;
+const has=(list,hd)=>(rel[list]||[]).some(p=>p.handle===hd);
+function relation(hd){return has('blocked',hd)?'blocked':has('friends',hd)?'friend'
+ :has('incoming',hd)?'incoming':has('sent',hd)?'sent':'none'}
+async function refreshFriends(){
+ if(!loggedIn()){rel={friends:[],incoming:[],sent:[],blocked:[]};return}
+ try{const out=await api('GET','api/friends');
+  rel={friends:out.friends||[],incoming:out.incoming||[],sent:out.sent||[],blocked:out.blocked||[]}}
+ catch{/* 끊겼으면 가진 것을 그대로 둔다 */}}
+async function afterSocial(message){await refreshFriends();renderPeople();renderProfile();renderFeed();
+ if(openPerson)renderPerson(openPerson);if(message)toast(message)}
+async function act(path,hd,message){if(!loggedIn())return toast('로그인하면 친구를 찾을 수 있어요.');
+ try{await api('POST','api/friends/'+path,{handle:hd});await afterSocial(message)}catch(e){toast(e.message)}}
+const sendRequest=hd=>relation(hd)==='sent'?act('remove',hd,'신청을 거뒀어요.')
+ :act('request',hd,'친구 신청을 보냈어요. 상대가 수락하면 친구가 돼요.');
+const acceptRequest=hd=>act('accept',hd,'@'+hd+' 님과 친구가 됐어요.');
+const declineRequest=hd=>act('decline',hd,'신청을 거절했어요.');
+const unfriend=hd=>confirm('@'+hd+' 님과 친구를 끊을까요?')&&act('remove',hd,'친구를 끊었어요.');
+function toggleBlock(hd){if(relation(hd)==='blocked')return act('unblock',hd,'차단을 풀었어요.');
+ if(!confirm('@'+hd+' 님을 차단할까요?\n친구 관계와 신청이 모두 풀리고, 서로의 기록이 보이지 않게 돼요.'))return;
+ act('block',hd,'@'+hd+' 님을 차단했어요.')}
+const isFriend=hd=>relation(hd)==='friend';
+const isBlocked=hd=>relation(hd)==='blocked';
+/* 친구의 기록은 아직 서버에 없다 — 다이어리 동기화가 붙으면 여기만 바뀐다 */
+function friendFeed(){return[]}
+
 function actionButton(hd){const how=relation(hd);
  const b=el('button','person-btn'+(how==='friend'||how==='sent'?' on':''),
   {blocked:'차단 해제',friend:'친구',incoming:'수락',sent:'신청함',none:'친구 신청'}[how]);
@@ -472,9 +448,12 @@ function moreButton(hd){const how=relation(hd),m=el('button','person-more','⋯'
   toggleBlock(hd)};
  return m}
 function personRow(p){const row=el('div','person'),hd=p.handle,friend=isFriend(hd),how=relation(hd);
- const face=el('span','person-face'+(friend?'':' veiled')),img=el('img');img.src=photos[p.avatar];img.alt='';face.append(img);
+ const face=el('span','person-face'+(friend?'':' veiled'));
+ if(friend&&p.seal&&p.seal.src){const i=el('img');i.src=p.seal.src;i.alt='';face.append(i)}
+ else face.append(el('span','seal-empty'));
  const id=el('span','person-id');
- id.append(el('b','',p.name),el('small','','@'+hd+' · '+(how==='blocked'?'차단함':friend?p.bio:how==='incoming'?'친구 신청을 보냈어요':'비공개 프로필')));
+ id.append(el('b','',p.name||'@'+hd),
+  el('small','','@'+hd+' · '+(how==='blocked'?'차단함':friend?(p.bio||'소개 없음'):how==='incoming'?'친구 신청을 보냈어요':'비공개 프로필')));
  const acts=el('span','person-actions');
  acts.append(actionButton(hd));
  if(how!=='blocked')acts.append(moreButton(hd));
@@ -484,13 +463,19 @@ function personRow(p){const row=el('div','person'),hd=p.handle,friend=isFriend(h
  row.onkeydown=e=>{if(e.key==='Enter')showPerson(hd)};
  return row}
 
-function renderPeople(){const list=$('#people-list');if(!list)return;list.replaceChildren();
- const q=$('#people-search').value;
- const rows=peopleTab==='검색'?findPeople(q)
-  :peopleTab==='친구'?PEOPLE.filter(p=>isFriend(p.handle))
-  :peopleTab==='받은 신청'?PEOPLE.filter(p=>isIncoming(p.handle))
-  :PEOPLE.filter(p=>isBlocked(p.handle));
+let searchTimer;
+async function renderPeople(){const list=$('#people-list');if(!list)return;
  $('#people-search').classList.toggle('hidden',peopleTab!=='검색');
+ if(!loggedIn()){list.replaceChildren();const empty=el('div','empty-state');
+  empty.append(el('span','empty-symbol','♡'),el('h2','','로그인하면 친구를 찾을 수 있어요'),
+   el('p','','시작 화면에서 메일로 들어오면 @아이디로 서로를 찾을 수 있어요.'));
+  list.append(empty);return}
+ let rows=[];
+ if(peopleTab==='검색'){try{found=(await api('GET','api/people?q='+encodeURIComponent($('#people-search').value.trim()))).people||[]}catch{found=[]}rows=found}
+ else if(peopleTab==='친구')rows=rel.friends;
+ else if(peopleTab==='받은 신청')rows=rel.incoming;
+ else rows=rel.blocked;
+ list.replaceChildren();
  if(!rows.length){const empty=el('div','empty-state');
   empty.append(el('span','empty-symbol',peopleTab==='차단'?'⊘':'♡'),
    el('h2','',{'검색':'찾는 사람이 없어요','친구':'아직 친구가 없어요','받은 신청':'받은 신청이 없어요','차단':'차단한 사람이 없어요'}[peopleTab]),
@@ -500,12 +485,12 @@ function renderPeople(){const list=$('#people-list');if(!list)return;list.replac
 
 TABS.forEach(t=>{const b=el('button',t===peopleTab?'selected':'',t);
  b.onclick=()=>{peopleTab=t;$$('#people-tabs button').forEach(x=>x.classList.toggle('selected',x===b));renderPeople()};$('#people-tabs').append(b)});
-$('#people-search').oninput=renderPeople;
+$('#people-search').oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(renderPeople,220)};
 function openPeopleTab(tab){peopleTab=tab;$$('#people-tabs button').forEach(x=>x.classList.toggle('selected',x.textContent===tab));goto('people');renderPeople()}
 $$('[data-people]').forEach(b=>b.onclick=()=>openPeopleTab(b.dataset.people==='requests'?'받은 신청':'친구'));
 
-/* ── 남의 프로필 ── 내 프로필과 같은 옷. 친구가 아니면 속은 잠겨 있다. */
-function showPerson(hd){const p=personBy(hd);if(!p)return;openPerson=hd;renderPerson(hd);goto('person')}
+/* ── 남의 프로필 ── 친구가 아니면 속은 잠겨 있다. */
+function showPerson(hd){if(!personBy(hd))return;openPerson=hd;renderPerson(hd);goto('person')}
 function renderPerson(hd){const p=personBy(hd),page=$('#person');if(!p||!page)return;
  const friend=isFriend(hd),how=relation(hd);
  page.replaceChildren();
@@ -513,27 +498,28 @@ function renderPerson(hd){const p=personBy(hd),page=$('#person');if(!p||!page)re
  back.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'+paths.back+'</svg>';
  back.onclick=()=>{openPerson=null;goto('people')};
  head.append(back,el('h1','','@'+hd),el('span',''));
- const cover=el('div','profile-cover'),cimg=el('img');cimg.src=photos[p.cover||p.photos[0]];cimg.alt='';cover.append(cimg);
+ const cover=el('div','profile-cover');
+ if(friend&&typeof p.cover==='string'&&p.cover){const i=el('img');i.src=p.cover.startsWith('data:')?p.cover:(photos[p.cover]||'');i.alt='';cover.append(i)}
+ else cover.classList.add('empty');
  const detail=el('div','profile-detail'),portrait=el('div','profile-portrait'+(friend?'':' veiled'));
- const pimg=el('img','custom-art');pimg.src=photos[p.avatar];pimg.alt='';portrait.append(pimg);
- detail.append(portrait,el('h1','',p.name),el('button','profile-handle','@'+hd));
- detail.append(el('p','',friend?p.bio:'비공개 프로필 · 친구에게만 보여요'));
+ if(friend&&p.seal&&p.seal.src){const i=el('img','custom-art photo');i.src=p.seal.src;i.alt='';portrait.append(i)}
+ else portrait.append(el('span','seal-empty'));
+ detail.append(portrait,el('h1','',p.name||'@'+hd));
+ if(p.name)detail.append(el('span','profile-handle','@'+hd));
+ detail.append(el('p','',friend?(p.bio||'소개 없음'):'비공개 프로필 · 친구에게만 보여요'));
  if(!friend)detail.append(el('span','profile-lock','비공개 · 친구에게만 보여요'));
  const acts=el('div','person-page-actions');
  acts.append(actionButton(hd));
  if(how!=='blocked')acts.append(moreButton(hd));
  detail.append(acts);
  page.append(head,cover,detail);
- const title=el('div','section-title');title.append(el('h2','',p.name+'의 기록'));
- page.append(title);
- if(friend){const grid=el('div','diary-grid');
-  friendFeed().filter(d=>d.author.handle===hd).forEach(d=>{const card=el('div','diary-card open');
-   card.append(spreadPreview(d),el('p','',d.date),el('h3','',d.title));grid.append(card)});
-  page.append(grid)}
- else{const empty=el('div','empty-state');
-  empty.append(el('span','empty-symbol','♡'),el('h2','','친구가 되면 볼 수 있어요'),
-   el('p','',how==='sent'?'신청을 보냈어요. 상대가 수락하면 열려요.':how==='incoming'?'이 사람이 먼저 신청했어요. 수락하면 열려요.':'친구 신청을 보내보세요.'));
-  page.append(empty)}}
+ const empty=el('div','empty-state');
+ empty.append(el('span','empty-symbol','♡'),
+  el('h2','',friend?'기록은 아직 여기 없어요':'친구가 되면 볼 수 있어요'),
+  el('p','',friend?'다이어리는 아직 기기에만 저장돼요. 서버로 옮기면 여기 쌓여요.'
+   :how==='sent'?'신청을 보냈어요. 상대가 수락하면 열려요.'
+   :how==='incoming'?'이 사람이 먼저 신청했어요. 수락하면 열려요.':'친구 신청을 보내보세요.'));
+ page.append(empty)}
 
 function renderProfile(){$('#profile-handle-edit').textContent='@'+me.handle;
  const cover=me.cover&&(me.cover.startsWith('data:')?me.cover:photos[me.cover]);
@@ -543,13 +529,13 @@ function renderProfile(){$('#profile-handle-edit').textContent='@'+me.handle;
  $('.profile-avatar').replaceChildren(sealNode());
  $('.landing-avatar')?.replaceChildren(sealNode());
  let name='';try{name=localStorage.getItem('diaru-profile-name')||''}catch{}
- $('.profile-detail h1').textContent=name;
+ $('.profile-detail h1').textContent=name||'@'+me.handle;   /* 이름을 안 지었으면 아이디가 이름 자리에 */
  $('.profile-detail').classList.toggle('no-name',!name);
  $('.profile-bio p').textContent=me.bio;
  $('.profile-bio').classList.toggle('empty',!me.bio);
  document.documentElement.classList.toggle('no-account',!me.onboarded);
- $('#profile-friends').textContent=social.friends.filter(hd=>!isBlocked(hd)).length;
- $('#profile-requests').textContent=PEOPLE.filter(p=>isIncoming(p.handle)).length}
+ $('#profile-friends').textContent=rel.friends.length;
+ $('#profile-requests').textContent=rel.incoming.length}
 /* 프로필 편집란 — 배경화면 · 인장 · 이름 · 아이디 · 소개를 그 자리에서 고친다. */
 function sealNode(){const s=me.seal;
  if(typeof s?.src==='string'&&s.src.startsWith('data:')){const i=el('img','custom-art'+(s.fit==='cover'?' photo':''));i.src=s.src;i.alt='';return i}
@@ -559,18 +545,14 @@ let editingProfile=false;
 function setProfileEditing(on){editingProfile=on;
  $('#profile').classList.toggle('editing',on);
  $('#profile-edit-toggle').textContent=on?'편집 끝내기':'프로필 편집';
- if(on){$('#profile-name-input').value=$('.profile-detail h1').textContent;
-  $('#profile-handle-input').value=me.handle;$('#profile-bio-input').value=me.bio}
+ if(on){let saved='';try{saved=localStorage.getItem('diaru-profile-name')||''}catch{}
+  $('#profile-name-input').value=saved;$('#profile-bio-input').value=me.bio}
  else commitProfile()}
 function commitProfile(){const name=$('#profile-name-input').value.trim().slice(0,40);
- if(name){$('.profile-detail h1').textContent=name;try{localStorage.setItem('diaru-profile-name',name)}catch{}}
+ try{localStorage.setItem('diaru-profile-name',name)}catch{}   /* 비우면 비워진다 — 그러면 아이디가 이름 자리로 */
  me.bio=$('#profile-bio-input').value.trim().slice(0,60);
- const hd=$('#profile-handle-input').value.trim().toLowerCase().replace(/^@/,'');
- if(hd&&hd!==me.handle){
-  if(!HANDLE_RE.test(hd))toast('아이디는 영문 소문자·숫자·밑줄 3~15자예요.');
-  else if(RESERVED.includes(hd)||personBy(hd))toast('이미 쓰이고 있는 아이디예요.');
-  else{me.handle=hd;toast('이제 @'+hd+' 예요.')}}
- saveMe();renderProfile();pushProfile({handle:me.handle,name:$('.profile-detail h1').textContent,bio:me.bio})}
+ /* 아이디는 가입할 때 한 번만 정한다 — 여기서는 고치지 않는다. */
+ saveMe();renderProfile();pushProfile({name:$('.profile-detail h1').textContent,bio:me.bio})}
 $('#profile-edit-toggle').onclick=()=>setProfileEditing(!editingProfile);
 $('#profile-seal').onclick=()=>{if(editingProfile)$('#seal-input').click();else setProfileEditing(true)};
 $('.profile-cover').onclick=()=>{if(editingProfile)$('#cover-input').click()};
@@ -596,7 +578,7 @@ $('#cover-input').onchange=e=>{const file=e.target.files[0];e.target.value='';if
    renderProfile();renderAuthPreview();pushProfile({cover:me.cover});toast('배경화면을 바꿨어요.')};
   img.onerror=()=>toast('JPG 또는 PNG 사진으로 다시 시도해주세요.');img.src=reader.result};
  reader.readAsDataURL(file)};
-saveMe();saveSocial();
+saveMe();
 
 /* 다이어리 한 장의 공개 범위 — 친구에게 보일지 말지. 기본은 나만 보기. */
 function setScope(shared){const b=$('#share-scope');b.setAttribute('aria-pressed',String(shared===true));
@@ -634,7 +616,9 @@ function adoptAccount(acc){
  if(settled||acc.bio)me.bio=typeof acc.bio==='string'?acc.bio:'';
  if(settled||acc.seal)me.seal=acc.seal||null;
  if(settled||acc.cover)me.cover=acc.cover||null;
- saveMe();renderProfile();$('#profile-logout').classList.remove('hidden')}
+ saveMe();renderProfile();
+ $('#profile-logout').classList.remove('hidden');$('#profile-delete').classList.remove('hidden');
+ refreshFriends().then(()=>{renderPeople();renderProfile();renderFeed()})}
 async function pushProfile(patch){if(!API.on||!API.token)return;
  try{await api('PATCH','api/me',patch)}catch(e){toast(e.message)}}
 async function connectServer(){
@@ -642,6 +626,12 @@ async function connectServer(){
  if(API.token){try{adoptAccount((await api('GET','api/me')).me)}
   catch{API.token=null;try{localStorage.removeItem('diaru-token')}catch{}}}
  return true}
+$('#profile-delete').onclick=async()=>{
+ if(!confirm('계정을 지울까요?\n아이디와 친구 관계가 사라지고 되돌릴 수 없어요.'))return;
+ if(!confirm('정말 지울까요? 이 기기의 기록도 함께 지웁니다.'))return;
+ try{await api('DELETE','api/me')}catch(e){return toast(e.message)}
+ try{localStorage.clear()}catch{}
+ location.reload()};
 $('#profile-logout').onclick=async()=>{if(!confirm('로그아웃할까요?'))return;
  try{await api('POST','api/auth/logout',{})}catch{}
  API.token=null;try{localStorage.removeItem('diaru-token')}catch{}
@@ -687,7 +677,7 @@ $('#auth-verify').onclick=async()=>{const code=$('#auth-code-input').value.trim(
  finally{$('#auth-verify').disabled=false}};
 $('#auth-code-input').onkeydown=e=>{if(e.key==='Enter')$('#auth-verify').click()};
 function finishAuth(){me.onboarded=true;saveMe();renderProfile();
- pushProfile({handle:me.handle,name:$('.profile-detail h1').textContent,bio:me.bio,seal:me.seal,cover:me.cover,onboarded:true});
+ pushProfile({name:$('.profile-detail h1').textContent,bio:me.bio,seal:me.seal,cover:me.cover,onboarded:true});
  $('#auth').classList.add('hidden');$$('.app > :not(#landing):not(#auth)').forEach(e=>e.inert=false);
  goto('home')}
 $('#enter-app').onclick=()=>{if(me.onboarded){goto('home');$('.app-header .logo')?.focus()}else startAuth()};

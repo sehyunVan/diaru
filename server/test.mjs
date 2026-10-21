@@ -108,6 +108,19 @@ const saved = JSON.parse(fs.readFileSync(DATA, 'utf8'));
 ok(Object.keys(saved.users).length === 4 && saved.byHandle.sehyun && saved.byHandle.root, '파일에 그대로 남는다(실험용 포함)');
 ok((await call('POST', '/api/auth/logout', {}, A)).json.ok && (await call('GET', '/api/me', null, A)).status === 401, '로그아웃하면 토큰이 죽는다');
 
+/* 계정 삭제 — A 는 위에서 로그아웃했으므로 새 세션으로 본다 */
+const A2 = (await login('a@example.com')).token;
+const gone = await login('gone@example.com');
+await call('PATCH', '/api/me', { handle: 'goner', onboarded: true }, gone.token);
+await call('POST', '/api/friends/request', { handle: 'sehyun' }, gone.token);
+ok((await call('GET', '/api/friends', null, A2)).json.incoming.some(p => p.handle === 'goner'), '지우기 전엔 신청이 보인다');
+ok((await call('DELETE', '/api/me', null, gone.token)).json.gone === true, '계정 삭제');
+ok((await call('GET', '/api/me', null, gone.token)).status === 401, '지운 계정의 토큰은 죽는다');
+ok(!(await call('GET', '/api/friends', null, A2)).json.incoming.some(p => p.handle === 'goner'), '남의 목록에서도 빠진다');
+ok((await call('GET', '/api/handle?h=goner')).json.free === true, '쓰던 아이디가 다시 빈다');
+const reborn = await login('gone@example.com');
+ok(/^diaru_/.test(reborn.me.handle) && reborn.me.onboarded === false, '같은 메일로 다시 들어오면 새 계정');
+
 console.log(`\n${pass}개 통과${fail ? ` · ${fail}개 실패` : ''}`);
 proc.kill();
 fs.rmSync(DATA, { force: true });
