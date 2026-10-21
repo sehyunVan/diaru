@@ -391,3 +391,25 @@ body{background:radial-gradient(ellipse at 50% 22%,#f2f2f6,#e5e6ee)}
 .custom-art.photo{object-fit:cover;border-radius:50%}
 #person .profile-handle:after{content:none}
 #person .profile-portrait img{width:67px;height:67px;object-fit:cover;border-radius:50%}
+
+
+/* ───── 손글씨 ───── */
+.piece.ink{touch-action:none}
+.piece.ink svg{width:100%;height:100%;display:block;overflow:visible}
+.feed-piece.ink svg{width:100%;height:100%;display:block}
+#paper.drawing{cursor:crosshair}
+#paper.drawing .piece{pointer-events:none}
+.editor-tools{grid-template-columns:repeat(6,1fr)}
+.editor-tools #add-ink.on{color:var(--navy);font-weight:600}
+.editor-tools #add-ink.on svg{fill:#e6ebf3}
+.pen-bar{display:flex;align-items:center;justify-content:center;gap:7px;background:#efebe2;padding:11px 10px 15px;margin:0}
+.ink-color{width:24px;height:24px;border-radius:50%;border:1px solid #ffffff80;box-shadow:0 1px 3px #2a3a5726}
+.ink-color.selected{box-shadow:0 0 0 2px var(--ivory),0 0 0 4px var(--navy)}
+.ink-nib{font-size:9px;color:#8b8274;background:var(--ivory);border:1px solid var(--line);border-radius:14px;padding:6px 10px}
+.ink-nib.selected{background:var(--navy);color:#fff;border-color:var(--navy)}
+
+/* 홈·내 다이어리도 펼친 면 */
+#home-diaries,#all-diaries{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 12px}
+#home-diaries .blank,#all-diaries .blank,#profile-diaries .blank{height:auto;aspect-ratio:1.2}
+#home-diaries .diary-card h3,#all-diaries .diary-card h3{font-size:10px;text-align:left;margin:0}
+#home-diaries .diary-card p{display:inline-block;font-size:8px;padding:3px 8px;margin:9px 0 4px}
