@@ -187,6 +187,23 @@ ok((await call('POST', '/api/report', { kind: 'person', target: '@x', reason: '�
   ok(lines.length === 2 && lines[0].by === 'reporter' && lines[0].kind === 'person', '신고가 파일에 줄로 쌓인다');
 }
 
+/* CORS — 앱은 https://localhost(안드로이드) · capacitor://localhost(iOS) 출처라 교차 출처다.
+   허락 헤더가 없으면 브라우저가 응답을 버리고, 앱에서는 「서버가 없다」로 보인다. */
+{
+  const appOrigin = 'https://localhost';
+  const r = await fetch(base + '/api/health', { headers: { Origin: appOrigin } });
+  const allow = r.headers.get('access-control-allow-origin');
+  ok(allow === '*' || allow === appOrigin, '앱 출처에 허락 헤더가 온다', '받은 값: ' + allow);
+  const pre = await fetch(base + '/api/me', { method: 'OPTIONS', headers: {
+    Origin: appOrigin, 'Access-Control-Request-Method': 'DELETE',
+    'Access-Control-Request-Headers': 'authorization,content-type' } });
+  ok(pre.status === 204, '사전 요청(OPTIONS)이 통과한다');
+  const h = (pre.headers.get('access-control-allow-headers') || '').toLowerCase();
+  ok(h.includes('authorization'), '사전 요청이 Authorization 을 허락한다', '받은 값: ' + h);
+  const m = (pre.headers.get('access-control-allow-methods') || '');
+  ok(m.includes('DELETE'), '사전 요청이 DELETE 를 허락한다 — 계정 삭제가 이걸 쓴다');
+}
+
 console.log(`\n${pass}개 통과${fail ? ` · ${fail}개 실패` : ''}`);
 proc.kill();
 fs.rmSync(DATA, { force: true });

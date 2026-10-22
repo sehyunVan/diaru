@@ -37,6 +37,14 @@ const tag = `<script>window.DIARU_API=${JSON.stringify(API)}</script>`;
 if (html.includes('window.DIARU_API')) { console.error('이미 박혀 있다 — dist/ 가 오염됐다'); process.exit(1); }
 if (!html.includes('<script src="app.js">')) { console.error('app.js 자리를 못 찾았다'); process.exit(1); }
 html = html.replace('<script src="app.js">', tag + '<script src="app.js">');
+
+/* 앱 전용 보정(native.css)을 켠다 — 웹 배포본에는 안 걸린다.
+   class 는 <html> 에 **처음부터** 박는다. 스크립트로 나중에 붙이면 첫 그림이 한 번 잘못 그려진다. */
+if (!/<html lang="ko">/.test(html)) { console.error('<html> 자리를 못 찾았다'); process.exit(1); }
+html = html.replace('<html lang="ko">', '<html lang="ko" class="native">');
+if (!html.includes('href="theme.css"')) { console.error('theme.css 링크를 못 찾았다'); process.exit(1); }
+html = html.replace('<link rel="stylesheet" href="theme.css">',
+  '<link rel="stylesheet" href="theme.css"><link rel="stylesheet" href="native.css">');
 fs.writeFileSync(indexPath, html);
 
 const count = (dir) => fs.readdirSync(dir, { withFileTypes: true })

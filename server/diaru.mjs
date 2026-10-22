@@ -15,7 +15,26 @@ const DIST = path.join(ROOT, 'dist');
 const DATA = process.env.DATA || path.join(ROOT, 'server/data/diaru.json');
 const PORT = Number(process.env.PORT || 3030);
 const DEV = process.env.DEV === '1';
-const ORIGIN = process.env.ORIGIN || '*';
+/* 어디서 오는 요청을 받아 줄 것인가.
+   웹에서는 앱과 서버가 같은 출처라 이게 필요 없었다. 그런데 **앱은 다르다** —
+   Capacitor 안의 출처는 안드로이드가 https://localhost, iOS 가 capacitor://localhost 라
+   우리 서버에 보내는 모든 요청이 교차 출처다. 허락 헤더가 없으면 브라우저가 응답을 버리고,
+   앱에서는 그게 「서버가 없다」로 보여서 로그인 화면이 통째로 건너뛰어졌다(2026-10-22).
+     ORIGIN=off                      헤더를 안 붙인다(같은 출처만 쓸 때)
+     ORIGIN=*                        누구나 — 토큰이 없으면 아무것도 못 읽으니 위험하진 않다
+     ORIGIN=a,b,c                    목록에 있는 출처에만, 그 출처를 그대로 돌려준다 */
+const ORIGINS = (process.env.ORIGIN || '*').split(',').map(s => s.trim()).filter(Boolean);
+function cors(req, res) {
+  if (ORIGINS[0] === 'off') return;
+  const from = req.headers.origin;
+  const allow = ORIGINS[0] === '*' ? '*' : (ORIGINS.includes(from) ? from : null);
+  if (!allow) return;
+  res.setHeader('Access-Control-Allow-Origin', allow);
+  if (allow !== '*') res.setHeader('Vary', 'Origin');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Max-Age', '86400');
+}
 
 /* 실험용 고정 계정 — DEV=1 이거나 DEMO_EMAIL 을 준 경우에만 살아 있다.
    아무 때나 켜 두면 그냥 뒷문이므로, 운영에서는 환경변수를 비워 둔다. */
@@ -518,11 +537,7 @@ function serveStatic(req, res, pathname) {
 
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
-  if (ORIGIN !== 'off') {
-    res.setHeader('Access-Control-Allow-Origin', ORIGIN);
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
-  }
+  cors(req, res);
   if (req.method === 'OPTIONS') { res.writeHead(204).end(); return; }
   if (!url.pathname.startsWith('/api/')) return serveStatic(req, res, url.pathname);
 

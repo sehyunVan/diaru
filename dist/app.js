@@ -780,11 +780,20 @@ function adoptAccount(acc){
 async function pushProfile(patch){if(!API.on||!API.token)return;
  try{await api('PATCH','api/me',patch)}catch(e){toast(e.message)}}
 async function connectServer(){
- /* 토큰 되살리기는 로그인 게이트보다 먼저 돌아야 한다 — 늦으면 멀쩡한 사람에게 로그인 화면이 뜬다 */
- await restoreToken();
- try{const r=await fetch(apiURL('api/health'),{cache:'no-store',signal:AbortSignal.timeout(4500)});if(!r.ok)return false;API.on=true}catch{return false}
+ /* 토큰 되살리기는 로그인 게이트보다 먼저 돌아야 한다 — 늦으면 멀쩡한 사람에게 로그인 화면이 뜬다.
+    네이티브 저장소가 답을 안 주고 매달릴 수도 있으므로 2초만 기다린다 — 여기서 멈추면 앱이 통째로 멈춘다. */
+ await Promise.race([restoreToken(),new Promise(r=>setTimeout(r,2000))]);
+ /* 폰은 켜자마자 망이 안 붙어 있을 때가 있다 — 한 번 더 두드린다(6초, 그 다음 8초) */
+ for(const ms of [6000,8000]){
+  try{const r=await fetch(apiURL('api/health'),{cache:'no-store',signal:AbortSignal.timeout(ms)});
+   if(r.ok){API.on=true;break}}catch{}
+ }
+ if(!API.on)return false;
  if(API.token){try{adoptAccount((await api('GET','api/me')).me)}
   catch{API.token=null;await keepToken(null)}}
+ /* 서버를 쓰는 앱인데 세션이 없다면, 이 기기에만 있는 가짜 계정이 남아 있는 것이다
+    (서버에 못 닿던 때 아이디만 정하고 들어온 경우). 그대로 두면 로그인이 영영 안 뜬다 — 풀어 준다. */
+ if(isNative()&&!API.token&&me.onboarded){me.onboarded=false;saveMe()}
  return true}
 $('#profile-delete').onclick=async()=>{
  if(!confirm('계정을 지울까요?\n아이디와 친구 관계가 사라지고 되돌릴 수 없어요.'))return;
@@ -804,19 +813,33 @@ function renderAuthPreview(){const seal=$('#auth-seal');if(!seal)return;
  const img=$('#auth-cover-img'),has=typeof me.cover==='string'&&me.cover.startsWith('data:');
  img.src=has?me.cover:(photos[me.cover]||photos.harbor);
  $('#auth-cover').classList.toggle('filled',has)}
+function showEmailStep(hint){
+ showAuthStep('auth-email');$('#auth-email-input').value=API.email;
+ const h=$('#auth-email-hint');
+ h.textContent=hint||'코드를 보내드려요. 비밀번호는 없어요.';
+ h.classList.toggle('bad',!!hint);
+ setTimeout(()=>$('#auth-email-input').focus(),60)}
 async function startAuth(){
  /* 서버에 묻는 중에 눌리면 이메일 단계를 통째로 건너뛴다 — 끝날 때까지 기다린다 */
- await Promise.race([SERVER_READY,new Promise(r=>setTimeout(r,4600))]);
+ await Promise.race([SERVER_READY,new Promise(r=>setTimeout(r,6500))]);
  $('#landing').classList.add('hidden');$('#auth').classList.remove('hidden');$('#auth').inert=false;
  $$('.app > :not(#landing):not(#auth)').forEach(e=>e.inert=true);
- if(API.on){showAuthStep('auth-email');$('#auth-email-input').value=API.email;
-  setTimeout(()=>$('#auth-email-input').focus(),60);return}
+ if(API.on)return showEmailStep();
+ /* 앱에서는 기기에만 사는 계정을 만들지 않는다.
+    한 번 만들면 me.onboarded 가 서 버려서 **이메일 단계가 다시는 안 뜬다** — 실제로 그렇게 됐다.
+    서버가 잠깐 안 보이는 것뿐이므로, 같은 칸에 이유를 적고 다시 눌러 보게 한다. */
+ if(isNative())return showEmailStep('서버에 닿지 못했어요. 연결을 확인하고 「코드 받기」를 다시 눌러 주세요.');
  showAuthStep('auth-handle');
  $('#auth-handle-input').value=me.handle;$('#auth-hint').classList.remove('bad');
  setTimeout(()=>$('#auth-handle-input').focus(),60)}
 async function sendCode(){const email=$('#auth-email-input').value.trim();
  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){$('#auth-email-hint').textContent='이메일을 확인해주세요.';$('#auth-email-hint').classList.add('bad');return}
  $('#auth-send').disabled=true;$('#auth-email-hint').classList.remove('bad');$('#auth-email-hint').textContent='보내는 중…';
+ /* 첫 시도에서 서버를 못 봤으면 여기서 한 번 더 두드린다 — 폰은 켜자마자 망이 안 붙어 있을 때가 있다 */
+ if(!API.on){await connectServer().catch(()=>{});
+  if(!API.on){$('#auth-send').disabled=false;
+   $('#auth-email-hint').textContent='서버에 닿지 못했어요. 잠시 뒤 다시 눌러 주세요.';
+   $('#auth-email-hint').classList.add('bad');return}}
  try{const out=await api('POST','api/auth/request',{email});API.email=email;
   showAuthStep('auth-code');$('#auth-code-input').value=out.code||'';
   $('#auth-code-hint').textContent=out.how==='logged'?'메일이 아직 연결되지 않아 서버 기록에 남겼어요.':email+' 로 보냈어요.';

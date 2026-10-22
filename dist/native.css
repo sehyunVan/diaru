@@ -1,0 +1,65 @@
+/* ============================================================
+   native.css — 앱(Capacitor) 안에서만 적용된다.
+   tools/pack-mobile.mjs 가 <html> 에 class="native" 를 붙이고 이 파일을 링크한다.
+   웹 배포본은 이 파일을 읽지 않는다 — 브라우저에서는 지금까지 그대로다.
+
+   왜 따로 필요한가. 웹에서 멀쩡한 레이아웃이 앱에서 두 가지로 깨졌다.
+
+   ① 웹뷰가 보고하는 CSS 폭이 600 을 넘으면 「책상 위의 폰」 데스크톱 레이아웃으로 떨어진다.
+      390px 액자가 가운데 떠서 화면을 다 못 채운다. 앱은 **언제나** 꽉 찬 폰이어야 한다.
+   ② viewport-fit=cover + 안드로이드 15 의 edge-to-edge 라 내용이 상태바 밑으로 들어간다.
+      아래쪽(.bottom-nav)은 이미 safe-area 를 쓰고 있었는데 위쪽은 아니었다.
+
+   그리고 100vw 를 쓰지 않는다 — 웹뷰가 말하는 100vw 가 실제로 보이는 폭과 다를 때가 있고,
+   그 차이가 좌우로 밀리는 화면이 된다. 부모를 따라가는 100% 가 안전하다.
+   ============================================================ */
+
+html.native {
+  --phone-width: 100%;
+  --phone-height: 100dvh;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;          /* 가로로 당겨도 따라오지 않게 */
+}
+html.native body {
+  width: 100%;
+  max-width: 100%;
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  display: block;                        /* 데스크톱의 grid/place-items 를 되돌린다 */
+  place-items: initial;
+  overflow: hidden;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+  background: var(--ivory, #fdfaf4);
+}
+
+/* 액자가 아니라 화면 그 자체 */
+html.native .app,
+html.native .editor-shell {
+  width: 100%;
+  max-width: 100%;
+  height: 100dvh;
+  min-height: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: hidden;
+}
+html.native .bottom-nav { max-width: 100%; }
+html.native .modal { backdrop-filter: none; }
+
+/* 상태바 밑으로 들어가지 않게 — 높이도 같이 키워야 글자가 안 눌린다 */
+html.native .app-header {
+  height: calc(75px + env(safe-area-inset-top));
+  padding-top: calc(20px + env(safe-area-inset-top));
+}
+html.native .editor-top {
+  height: calc(72px + env(safe-area-inset-top));
+  padding-top: calc(14px + env(safe-area-inset-top));
+}
+html.native #landing { padding-top: env(safe-area-inset-top); }
+html.native #auth { padding-top: env(safe-area-inset-top); }
