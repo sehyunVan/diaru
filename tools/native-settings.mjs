@@ -119,6 +119,20 @@ edit(path.join(M, 'android/app/src/main/AndroidManifest.xml'), s => {
     'android:name=".MainActivity"\n            android:screenOrientation="portrait"');
 }, '안드로이드 AndroidManifest — 세로 고정');
 
+/* MainActivity — `cap add android` 가 덮어쓰는 파일이다.
+   원본은 mobile/native/MainActivity.java 에 두고 여기서 제자리에 넣는다(한 벌만 둔다). */
+{
+  const src = path.join(M, 'native/MainActivity.java');
+  const dst = path.join(M, 'android/app/src/main/java/sarl/diaru/app/MainActivity.java');
+  const want = fs.existsSync(src) ? fs.readFileSync(src, 'utf8') : null;
+  const have = fs.existsSync(dst) ? fs.readFileSync(dst, 'utf8') : null;
+  if (!want) note(false, 'MainActivity 원본이 없다(mobile/native/MainActivity.java)');
+  else if (want === have) note(true, '안드로이드 MainActivity — 내비게이션 바 숨김 (이미 맞음)');
+  else if (CHECK) note(false, '안드로이드 MainActivity — 덮어써져 있다(내비게이션 바가 다시 겹친다)');
+  else { fs.mkdirSync(path.dirname(dst), { recursive: true }); fs.writeFileSync(dst, want); changed++;
+         note(true, '안드로이드 MainActivity — 내비게이션 바 숨김'); }
+}
+
 edit(path.join(M, 'android/app/build.gradle'), s => {
   if (s.includes('signingConfigs')) return s;
   /* keystore.properties 가 있으면 release 를 서명한다. 없으면 그냥 지나간다(디버그 빌드는 계속 된다).

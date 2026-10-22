@@ -43,6 +43,33 @@ else diaries=kept;
 let current=null,selected=null,dirty=false,scale=1,zoom=1,activePage=0,toastTimer;function toast(m){$('#toast').textContent=m;$('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),2800)}
 function goto(page){$('#landing').classList.add('hidden');$$('.app > :not(#landing)').forEach(e=>e.inert=false);$$('.page').forEach(e=>e.classList.toggle('hidden',e.id!==page));$$('.bottom-nav [data-page]').forEach(e=>e.classList.toggle('active',e.dataset.page===(page==='stickers'?'shop':page)));$('main').scrollTop=0;if(page==='feed')renderFeed();if(page==='notifications'){renderNotifications();$('.notification-button').classList.remove('unread')}}
 $$('[data-page]').forEach(b=>b.onclick=()=>goto(b.dataset.page));$$('[data-goto]').forEach(b=>b.onclick=()=>goto(b.dataset.goto));$('.logo').onclick=e=>{e.preventDefault();goto('home')};
+/* ── 안드로이드 뒤로가기 ──────────────────────────────
+   이 앱은 화면이 하나뿐(SPA)이라 브라우저 기록이 없다. 그래서 기기의 뒤로가기를 그냥 두면
+   아무 일도 안 일어나거나 앱이 통째로 꺼진다. 눌린 순간 **지금 열려 있는 것 중 가장 위를** 닫는다.
+   맨 위가 홈이면 그때만 앱을 닫되, 실수로 꺼지지 않게 한 번 더 묻는다. */
+const openPage=()=>{const p=$$('.page').find(e=>!e.classList.contains('hidden'));return p?p.id:'home'};
+let exitArmed=0;
+function goBack(){
+ const sheet=document.querySelector('.sheet-back');
+ if(sheet){sheet.remove();return true}                                  /* 시트가 제일 위 */
+ if(!$('#editor').classList.contains('hidden')){
+  if(!$('#editor-drawer').classList.contains('hidden')){$('#editor-drawer').classList.add('hidden');return true}
+  if(inkMode){setInkMode(false);return true}                            /* 펜을 들고 있으면 펜부터 내린다 */
+  closeEditor();return true}
+ if(!$('#auth').classList.contains('hidden')){                          /* 가입 중이면 시작 화면으로 */
+  $('#auth').classList.add('hidden');$('#auth').inert=true;
+  $('#landing').classList.remove('hidden');return true}
+ const page=openPage();
+ if(page==='person')  {goto('people');return true}
+ if(page==='stickers'){goto('shop');return true}
+ if(page!=='home')    {goto('home');return true}
+ if(Date.now()-exitArmed<2000)return false;                             /* 두 번째 — 진짜로 닫는다 */
+ exitArmed=Date.now();toast('한 번 더 누르면 닫혀요.');return true}
+(async()=>{try{
+ const App=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.App;
+ if(!App||!App.addListener)return;
+ await App.addListener('backButton',()=>{if(!goBack())App.exitApp()});
+}catch{}})();
 const shortDate=s=>{const m=/^(\d{4})\.(\d{2})\.(\d{2})$/.exec(s||'');if(!m)return s||'';return m[2]+'.'+m[3]+' ('+'일월화수목금토'[new Date(+m[1],+m[2]-1,+m[3]).getDay()]+')'};
 function renderDiaries(filter='전체'){['#home-diaries','#all-diaries','#profile-diaries'].forEach(target=>{const root=$(target);root.replaceChildren();let list=target==='#all-diaries'?diaries.filter(d=>filter==='전체'||d.subtitle===filter):diaries.slice(0,3);list.forEach(d=>{const card=el('button','diary-card open');card.append(spreadPreview(d),el('p','',shortDate(d.date)),el('h3','',target==='#home-diaries'?(d.subtitle||d.title):d.title));card.onclick=()=>openEditor(d);root.append(card)});if(target==='#profile-diaries'&&!list.length){const empty=el('p','storage-note','아직 남긴 기록이 없어요.');root.append(empty)}
  if(target!=='#profile-diaries'){const add=el('button','blank');add.setAttribute('aria-label','새 다이어리 만들기');add.append(el('b','','＋'),el('span','','새로운 기록'));add.onclick=()=>openEditor();root.append(add)}});$('#diary-total').textContent=diaries.length;$('#profile-count').textContent=diaries.length;renderFeed()}
