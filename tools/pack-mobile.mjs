@@ -45,6 +45,16 @@ html = html.replace('<html lang="ko">', '<html lang="ko" class="native">');
 if (!html.includes('href="theme.css"')) { console.error('theme.css 링크를 못 찾았다'); process.exit(1); }
 html = html.replace('<link rel="stylesheet" href="theme.css">',
   '<link rel="stylesheet" href="theme.css"><link rel="stylesheet" href="native.css">');
+
+/* 웹뷰의 제 줌을 끈다 — **앱에서만.**
+   iOS 의 WKWebView 는 안드로이드와 달리 핀치·더블탭 확대가 기본으로 열려 있다.
+   한 번 확대되면 그 뒤로 화면이 계속 좌우로 밀린다. 그런데 이 앱은 편집기에서
+   **자기 핀치 줌을 직접 구현해 쓰므로**, 웹뷰의 줌은 보탬이 아니라 방해다.
+   웹(브라우저)에서는 건드리지 않는다 — 거기서 줌을 막는 건 접근성을 깎는 짓이다. */
+const VP_OLD = '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">';
+const VP_NEW = '<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">';
+if (!html.includes(VP_OLD)) { console.error('viewport 메타를 못 찾았다'); process.exit(1); }
+html = html.replace(VP_OLD, VP_NEW);
 fs.writeFileSync(indexPath, html);
 
 const count = (dir) => fs.readdirSync(dir, { withFileTypes: true })
