@@ -74,22 +74,22 @@ function paintPaperChrome(pick){const paper=$('#paper');paper.querySelector('.pa
  const chrome=chromeNode(pick,false);if(chrome)paper.prepend(chrome)}
 function applyPaper(id){const p=$('#paper'),pick=PAPERS.some(([k])=>k===id)?id:'plain';PAPERS.forEach(([k])=>p.classList.toggle('p-'+k,k===pick));p.dataset.paper=pick;paintPaperChrome(pick);$$('#paper-patterns button').forEach(b=>b.classList.toggle('selected',b.dataset.paper===pick))}
 function markSwatch(c){const hex=String(c||'').toLowerCase();$$('#paper-swatches button').forEach(b=>b.classList.toggle('selected',b.dataset.color===hex))}
-PAPERS.forEach(([id,name])=>{const b=el('button');b.dataset.paper=id;b.setAttribute('aria-label',name+' 속지');b.append(el('i','paper-tile paper-surface p-'+id),el('small','',name));b.onclick=()=>{applyPaper(id);dirty=true};$('#paper-patterns').append(b)});
-PAPER_COLORS.forEach(c=>{const b=el('button');b.dataset.color=c;b.style.background=c;b.setAttribute('aria-label',c+' 속지 색');b.onclick=()=>{$('#paper-color').value=c;$('#paper').style.backgroundColor=c;markSwatch(c);dirty=true};$('#paper-swatches').append(b)});
+PAPERS.forEach(([id,name])=>{const b=el('button');b.dataset.paper=id;b.setAttribute('aria-label',name+' 속지');b.append(el('i','paper-tile paper-surface p-'+id),el('small','',name));b.onclick=()=>{mark();applyPaper(id);dirty=true};$('#paper-patterns').append(b)});
+PAPER_COLORS.forEach(c=>{const b=el('button');b.dataset.color=c;b.style.background=c;b.setAttribute('aria-label',c+' 속지 색');b.onclick=()=>{mark();$('#paper-color').value=c;$('#paper').style.backgroundColor=c;markSwatch(c);dirty=true};$('#paper-swatches').append(b)});
 function resizePaper(){const w=$('.paper-area').clientWidth-24;if(w<=0)return;scale=Math.min(1,w/1200)*zoom;$('#paper').style.transform=`scale(${scale})`;$('.paper-frame').style.width=1200*scale+'px';$('.paper-frame').style.height=1000*scale+'px'}window.addEventListener('resize',resizePaper);
 function choosePage(page){activePage=page;['#select-left','#select-right'].forEach((s,i)=>{$(s).classList.toggle('selected',i===page);$(s).setAttribute('aria-pressed',String(i===page))});if(zoom>1)$('.paper-area').scrollLeft=page*600*scale}
 const FONT_STYLES={gaegu:'"Gaegu", cursive',nanum:'"Nanum Pen Script", cursive',sans:'"Noto Sans KR", sans-serif',serif:'"Noto Serif KR", serif'};
 function applyPieceStyle(p,data){const rotation=Number.isFinite(Number(data.rotation))?Number(data.rotation):0;p.dataset.rotation=rotation;p.style.transform='rotate('+rotation+'deg)';if(p.dataset.type==='text'){const font=Object.hasOwn(FONT_STYLES,data.font)?data.font:'gaegu';p.dataset.font=font;p.dataset.bold=String(data.bold===true);p.dataset.italic=String(data.italic===true);p.style.fontFamily=FONT_STYLES[font];p.style.fontWeight=data.bold===true?'700':'400';p.style.fontStyle=data.italic===true?'italic':'normal'}}
 function syncSelectionToolbar(){const toolbar=$('#selection-toolbar');toolbar.classList.toggle('hidden',!selected);if(!selected)return;const text=selected.dataset.type==='text';$('#selection-kind').textContent={text:'텍스트',photo:'사진',sticker:'스티커',ink:'손글씨'}[selected.dataset.type];$('#text-options').classList.toggle('hidden',!text);const rotation=Number(selected.dataset.rotation||0);$('#rotation-slider').value=rotation;$('#rotation-value').textContent=rotation+'°';if(text){$('#font-family').value=selected.dataset.font||'gaegu';$('#font-bold').setAttribute('aria-pressed',selected.dataset.bold||'false');$('#font-italic').setAttribute('aria-pressed',selected.dataset.italic||'false')}}
 function selectPiece(p){if(selected&&selected!==p&&selected.isContentEditable)selected.blur();$$('#paper .piece').forEach(x=>x.classList.toggle('selected',x===p));selected=p;syncSelectionToolbar()}
-function setRotation(value){if(!selected)return;const angle=Math.max(-180,Math.min(180,Math.round(value)));selected.dataset.rotation=angle;selected.style.transform='rotate('+angle+'deg)';dirty=true;syncSelectionToolbar()}
+function setRotation(value){if(!selected)return;mark();const angle=Math.max(-180,Math.min(180,Math.round(value)));selected.dataset.rotation=angle;selected.style.transform='rotate('+angle+'deg)';dirty=true;syncSelectionToolbar()}
 $('#rotation-slider').oninput=e=>setRotation(Number(e.target.value));$('#rotate-left').onclick=()=>setRotation(Number(selected?.dataset.rotation||0)-15);$('#rotate-right').onclick=()=>setRotation(Number(selected?.dataset.rotation||0)+15);$('#rotation-reset').onclick=()=>setRotation(0);$('#deselect-piece').onclick=()=>selectPiece(null);
-$('#font-family').onchange=e=>{if(selected?.dataset.type!=='text')return;selected.dataset.font=e.target.value;selected.style.fontFamily=FONT_STYLES[e.target.value];dirty=true};
-for(const [id,key,property,on,off] of [['#font-bold','bold','fontWeight','700','400'],['#font-italic','italic','fontStyle','italic','normal']]){$(id).onclick=()=>{if(selected?.dataset.type!=='text')return;const enabled=selected.dataset[key]!=='true';selected.dataset[key]=String(enabled);selected.style[property]=enabled?on:off;dirty=true;syncSelectionToolbar()}}
+$('#font-family').onchange=e=>{if(selected?.dataset.type!=='text')return;mark();selected.dataset.font=e.target.value;selected.style.fontFamily=FONT_STYLES[e.target.value];dirty=true};
+for(const [id,key,property,on,off] of [['#font-bold','bold','fontWeight','700','400'],['#font-italic','italic','fontStyle','italic','normal']]){$(id).onclick=()=>{if(selected?.dataset.type!=='text')return;mark();const enabled=selected.dataset[key]!=='true';selected.dataset[key]=String(enabled);selected.style[property]=enabled?on:off;dirty=true;syncSelectionToolbar()}}
 $$('#selection-toolbar button').forEach(b=>b.onpointerdown=e=>e.preventDefault());
-function placePiece(data){const p=addPiece({...data,x:data.x+activePage*600});selectPiece(p)}
+function placePiece(data){mark();const p=addPiece({...data,x:data.x+activePage*600});selectPiece(p)}
 
-function openEditor(d=null){current=d?JSON.parse(JSON.stringify(d)):{id:globalThis.crypto?.randomUUID?.()||'diary-'+Date.now()+'-'+Math.random().toString(36).slice(2),title:new Date().toLocaleDateString('ko-KR')+' 오늘의 기록',date:new Date().toLocaleDateString('sv-SE').replaceAll('-','.'),image:null,subtitle:'일상',paper:'plain',shared:false,layout:'spread',items:[]};$('#title-input').value=current.title;setScope(current.shared===true);$('#paper').replaceChildren();$('#paper').style.backgroundColor=current.background||'#fffdf7';$('#paper-color').value=current.background||'#fffdf7';markSwatch(current.background||'#fffdf7');applyPaper(current.paper||'plain');const items=Array.isArray(current.items)?current.items:[];items.forEach(addPiece);selectPiece(null);dirty=false;zoom=1;choosePage(0);$('#zoom-paper').textContent='확대 ＋';$('#zoom-paper').setAttribute('aria-pressed','false');setInkMode(false);$('#editor').classList.remove('hidden');$('#editor-drawer').classList.add('hidden');document.querySelector('.app').inert=true;resizePaper();$('.paper-area').scrollTo(0,0);}
+function openEditor(d=null){current=d?JSON.parse(JSON.stringify(d)):{id:globalThis.crypto?.randomUUID?.()||'diary-'+Date.now()+'-'+Math.random().toString(36).slice(2),title:new Date().toLocaleDateString('ko-KR')+' 오늘의 기록',date:new Date().toLocaleDateString('sv-SE').replaceAll('-','.'),image:null,subtitle:'일상',paper:'plain',shared:false,layout:'spread',items:[]};$('#title-input').value=current.title;setScope(current.shared===true);$('#paper').replaceChildren();$('#paper').style.backgroundColor=current.background||'#fffdf7';$('#paper-color').value=current.background||'#fffdf7';markSwatch(current.background||'#fffdf7');applyPaper(current.paper||'plain');const items=Array.isArray(current.items)?current.items:[];items.forEach(addPiece);selectPiece(null);resetHistory();dirty=false;zoom=1;choosePage(0);$('#zoom-paper').textContent='확대 ＋';$('#zoom-paper').setAttribute('aria-pressed','false');setInkMode(false);$('#editor').classList.remove('hidden');$('#editor-drawer').classList.add('hidden');document.querySelector('.app').inert=true;resizePaper();$('.paper-area').scrollTo(0,0);}
 $('#select-left').onclick=()=>choosePage(0);$('#select-right').onclick=()=>choosePage(1);function setZoom(z,keep){zoom=Math.min(3,Math.max(1,z));
  $('#zoom-paper').textContent=zoom>1.02?'전체 보기':'확대 ＋';
  $('#zoom-paper').setAttribute('aria-pressed',String(zoom>1.02));
@@ -97,7 +97,8 @@ $('#select-left').onclick=()=>choosePage(0);$('#select-right').onclick=()=>choos
 $('#zoom-paper').onclick=()=>setZoom(zoom>1.02?1:2);
 
 /* 두 손가락으로 확대·축소 — 집은 자리를 손가락 사이에 그대로 붙들어 둔다. */
-(function pinchZoom(){const area=$('.paper-area'),pts=new Map();
+const PTS=new Map();   /* 지금 종이에 닿아 있는 손가락들 — 펜도 이걸 보고 「혼자인지」 안다 */
+(function pinchZoom(){const area=$('.paper-area'),pts=PTS;
  let startGap=0,startZoom=1,cx=0,cy=0;
  const two=()=>[...pts.values()].slice(-2); /* 늘 '가장 최근 두 손가락' — 떼는 신호를 놓쳐도 다음 제스처가 산다 */
  const gap=()=>{const [p,q]=two();return Math.hypot(p.x-q.x,p.y-q.y)};
@@ -109,7 +110,9 @@ $('#zoom-paper').onclick=()=>setZoom(zoom>1.02?1:2);
   startGap=gap()||1;startZoom=zoom};
  area.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')return;
   pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
-  if(pts.size>=2){rebase();$$('#paper .piece').forEach(p=>{p.onpointermove=null})}},true);
+  /* 손가락이 둘이 되면 그건 확대하겠다는 뜻이다 — 첫 손가락이 긋고 있던 획은 없던 일로 한다.
+     (펜을 든 채로 확대하면 획이 그어지던 것이 이것이었다) */
+  if(pts.size>=2){abortInkStroke();rebase();$$('#paper .piece').forEach(p=>{p.onpointermove=null})}},true);
  area.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;
   pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(pts.size!==2||!startGap)return;
@@ -155,13 +158,45 @@ if(data.type==='ink'){const strokes=Array.isArray(data.strokes)?data.strokes:[];
  p.style.width=w+'px';p.style.height=hgt+'px';p.dataset.strokes=JSON.stringify(strokes);
  p.innerHTML=inkSvg(strokes,w,hgt);p.setAttribute('aria-label','손글씨');}
 else if(data.type==='photo'){const img=el('img');img.src=data.content;img.alt='다이어리 사진';p.append(img);p.style.width=(data.w||220)+'px';p.style.height=(data.h||190)+'px'}else if(data.type==='sticker'){if(typeof data.src==='string'&&data.src.startsWith('data:')){p.dataset.src=data.src;p.classList.add('custom');p.setAttribute('aria-label',data.content||'내 스티커');p.style.backgroundImage='url('+data.src+')'}else{const n=Number.isInteger(data.sprite)?data.sprite:2,pack=PACK_BY_ID[data.pack]||PACKS[0];p.dataset.sprite=n;p.dataset.pack=pack.id;p.classList.add('pack-'+pack.id);p.setAttribute('aria-label',data.content||pack.cells[n]?.[0]||'스티커');p.style.backgroundPosition=`${(n%4)*100/3}% ${Math.floor(n/4)*100/3}%`}}else p.textContent=data.content;
-applyPieceStyle(p,data);p.onpointerdown=e=>{selectPiece(p);if(p.isContentEditable)return;const box=p.getBoundingClientRect();if(data.type==='photo'&&e.clientX>box.right-18&&e.clientY>box.bottom-18){dirty=true;return}e.preventDefault();p.setPointerCapture(e.pointerId);const x=e.clientX,y=e.clientY,left=p.offsetLeft,top=p.offsetTop;p.onpointermove=ev=>{p.style.left=Math.max(0,Math.min(1200-p.offsetWidth,left+(ev.clientX-x)/scale))+'px';p.style.top=Math.max(0,Math.min(1000-p.offsetHeight,top+(ev.clientY-y)/scale))+'px';dirty=true};p.onpointerup=p.onpointercancel=()=>{p.onpointermove=null}};
+applyPieceStyle(p,data);p.onpointerdown=e=>{selectPiece(p);if(p.isContentEditable)return;const box=p.getBoundingClientRect();if(data.type==='photo'&&e.clientX>box.right-18&&e.clientY>box.bottom-18){mark();dirty=true;return}e.preventDefault();p.setPointerCapture(e.pointerId);const x=e.clientX,y=e.clientY,left=p.offsetLeft,top=p.offsetTop;const before=snapshot();let moved=false;p.onpointermove=ev=>{if(!moved){moved=true;pushSnapshot(before)}p.style.left=Math.max(0,Math.min(1200-p.offsetWidth,left+(ev.clientX-x)/scale))+'px';p.style.top=Math.max(0,Math.min(1000-p.offsetHeight,top+(ev.clientY-y)/scale))+'px';dirty=true};p.onpointerup=p.onpointercancel=()=>{p.onpointermove=null}};
 if(data.type==='text'){p.ondblclick=()=>{selectPiece(p);p.contentEditable='true';p.focus()};p.onblur=()=>{p.contentEditable='false';dirty=true};p.oninput=()=>dirty=true;p.onpaste=e=>{e.preventDefault();const sel=window.getSelection();if(sel.rangeCount){const r=sel.getRangeAt(0);r.deleteContents();r.insertNode(document.createTextNode(e.clipboardData.getData('text/plain')));sel.collapseToEnd()}}}$('#paper').append(p);dirty=true;return p;}
 function capture(){return{...current,layout:'spread',title:$('#title-input').value.trim()||'이름 없는 하루',background:$('#paper-color').value,paper:$('#paper').dataset.paper||'plain',shared:$('#share-scope').getAttribute('aria-pressed')==='true',items:$$('#paper .piece').map(p=>({type:p.dataset.type,content:p.dataset.type==='photo'?p.querySelector('img').getAttribute('src'):p.dataset.type==='sticker'?p.getAttribute('aria-label'):p.dataset.type==='ink'?'손글씨':p.innerText,sprite:p.dataset.sprite===undefined?undefined:Number(p.dataset.sprite),pack:p.dataset.pack,src:p.dataset.src,strokes:p.dataset.strokes?JSON.parse(p.dataset.strokes):undefined,rotation:Number(p.dataset.rotation||0),font:p.dataset.font,bold:p.dataset.bold==='true',italic:p.dataset.italic==='true',x:p.offsetLeft,y:p.offsetTop,w:p.offsetWidth,h:p.offsetHeight}))}}
 function save(){if(!current)return;const d=capture(),next=diaries.some(x=>x.id===d.id)?diaries.map(x=>x.id===d.id?d:x):[d,...diaries];try{diaries=next;cacheDiaries();pushDiary(d);current=d;dirty=false;renderDiaries();closeEditor(true);goto('home');toast('오늘의 기록을 저장했어요 ♡')}catch{toast('저장 공간이 부족해요. 공유 파일로 먼저 보관해주세요.')}}
+/* ── 되돌리기 / 다시하기 ─────────────────────────────
+   종이에 놓인 것들만 기억한다(제목·공개 범위는 아니다 — 글자를 고치다 되돌려지면 성가시다).
+   무엇을 하기 **전에** mark() 를 불러 그 직전 모습을 쌓는다. */
+const HIST={un:[],re:[]};
+const snapshot=()=>JSON.stringify({background:$('#paper-color').value,
+ paper:$('#paper').dataset.paper||'plain',items:capture().items});
+function syncHistory(){const u=$('#undo'),r=$('#redo');
+ if(u)u.disabled=!HIST.un.length;if(r)r.disabled=!HIST.re.length}
+function resetHistory(){HIST.un.length=0;HIST.re.length=0;syncHistory()}
+function pushSnapshot(s){
+ if(HIST.un[HIST.un.length-1]===s)return;    /* 아무것도 안 바뀌었으면 쌓지 않는다 */
+ HIST.un.push(s);if(HIST.un.length>40)HIST.un.shift();
+ HIST.re.length=0;syncHistory()}
+function mark(){pushSnapshot(snapshot())}
+function restoreSnapshot(s){sealInk();
+ $('#paper').replaceChildren();
+ $('#paper').style.backgroundColor=s.background||'#fffdf7';
+ $('#paper-color').value=s.background||'#fffdf7';markSwatch(s.background||'#fffdf7');
+ applyPaper(s.paper||'plain');
+ (s.items||[]).forEach(addPiece);
+ selectPiece(null);dirty=true}
+function undo(){if(!HIST.un.length)return toast('되돌릴 것이 없어요.');
+ HIST.re.push(snapshot());restoreSnapshot(JSON.parse(HIST.un.pop()));syncHistory()}
+function redo(){if(!HIST.re.length)return toast('다시 할 것이 없어요.');
+ HIST.un.push(snapshot());restoreSnapshot(JSON.parse(HIST.re.pop()));syncHistory()}
+{const u=$('#undo'),r=$('#redo');if(u)u.onclick=undo;if(r)r.onclick=redo}
+document.addEventListener('keydown',e=>{
+ if($('#editor').classList.contains('hidden')||!(e.ctrlKey||e.metaKey))return;
+ const k=e.key.toLowerCase();
+ if(k==='z'&&!e.shiftKey){e.preventDefault();undo()}
+ else if(k==='y'||(k==='z'&&e.shiftKey)){e.preventDefault();redo()}});
+
 $('#save').onclick=save;$('#title-input').oninput=()=>dirty=true;$('#paper-color').oninput=e=>{$('#paper').style.backgroundColor=e.target.value;markSwatch(e.target.value);dirty=true};function closeEditor(force){setInkMode(false);if(!force&&dirty&&!confirm('저장하지 않은 내용이 있어요. 닫을까요?'))return;dirty=false;selectPiece(null);$('#editor').classList.add('hidden');$('#editor-drawer').classList.add('hidden');document.body.style.overflow='';document.querySelector('.app').inert=false}
 $('#close-editor').onclick=()=>closeEditor();$$('.new').forEach(b=>b.onclick=()=>openEditor());/* 손글씨 모드: 켜면 조각은 잠들고 종이가 받아 적는다. 끄면 그때까지 쓴 획이 한 덩어리로 굳는다. */
-let inkMode=false,inkPiece=null,inkStrokes=[],inkDrawing=null,inkColor='#2a3a57',inkWidth=9;
+let inkMode=false,inkPiece=null,inkStrokes=[],inkDrawing=null,inkColor='#2a3a57',inkWidth=9,inkErase=false;
 const INK_COLORS=['#2a3a57','#8c6b4f','#7d8f6e','#a8697a'];
 function renderInkPiece(){const box=inkBounds(inkStrokes,2);
  const rel=inkStrokes.map(s=>({c:s.c,w:s.w,p:s.p.map(([x,y,pr])=>[+(x-box.x).toFixed(1),+(y-box.y).toFixed(1),+pr.toFixed(2)])}));
@@ -171,13 +206,61 @@ function renderInkPiece(){const box=inkBounds(inkStrokes,2);
   inkPiece.dataset.strokes=JSON.stringify(rel);inkPiece.innerHTML=inkSvg(rel,box.w,box.h)}
  dirty=true}
 function sealInk(){inkPiece=null;inkStrokes=[];inkDrawing=null}
-function setInkMode(on){inkMode=on;sealInk();
+/* 긋던 획을 없던 일로 한다 — 두 번째 손가락이 닿는 순간 불린다.
+   이번 묶음의 마지막 획만 빼고, 그래서 아무것도 안 남으면 조각째 치운다. */
+function abortInkStroke(){
+ if(!inkDrawing)return;
+ const i=inkStrokes.lastIndexOf(inkDrawing);
+ if(i>=0)inkStrokes.splice(i,1);
+ inkDrawing=null;
+ if(!inkStrokes.length){if(inkPiece)inkPiece.remove();sealInk();return}
+ renderInkPiece()}
+/* ── 지우개 ─────────────────────────────────────────
+   획 하나를 통째로 지운다(반쯤 지우지 않는다 — 획이 점의 줄이라 그게 자연스럽다).
+   종이에 놓인 모든 손글씨 조각을 뒤진다: 지금 묶음뿐 아니라 아까 쓴 것도 지워져야 하므로. */
+function distToSeg(px,py,ax,ay,bx,by){
+ const dx=bx-ax,dy=by-ay,len=dx*dx+dy*dy;
+ const t=len?Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/len)):0;
+ return Math.hypot(px-ax-dx*t,py-ay-dy*t)}
+function eraseAt(x,y,r){
+ let hit=false;
+ $$('#paper .piece.ink').forEach(piece=>{
+  let strokes;try{strokes=JSON.parse(piece.dataset.strokes||'[]')}catch{return}
+  const ox=piece.offsetLeft,oy=piece.offsetTop;
+  const keep=strokes.filter(s=>{
+   const pts=s.p;
+   for(let i=0;i<pts.length;i++){
+    const [ax,ay]=pts[i],[bx,by]=pts[Math.min(i+1,pts.length-1)];
+    if(distToSeg(x-ox,y-oy,ax,ay,bx,by)<=r+(s.w||9)/2)return false}
+   return true});
+  if(keep.length===strokes.length)return;
+  hit=true;
+  if(!keep.length){if(piece===inkPiece)sealInk();piece.remove();return}
+  /* 남은 획만으로 조각을 다시 앉힌다 — 테두리가 줄면 자리도 같이 줄어야 한다 */
+  const abs=keep.map(s=>({c:s.c,w:s.w,p:s.p.map(([px,py,pr])=>[px+ox,py+oy,pr])}));
+  const box=inkBounds(abs,2);
+  const rel=abs.map(s=>({c:s.c,w:s.w,p:s.p.map(([px,py,pr])=>[+(px-box.x).toFixed(1),+(py-box.y).toFixed(1),+pr.toFixed(2)])}));
+  piece.style.left=box.x+'px';piece.style.top=box.y+'px';
+  piece.style.width=box.w+'px';piece.style.height=box.h+'px';
+  piece.dataset.strokes=JSON.stringify(rel);piece.innerHTML=inkSvg(rel,box.w,box.h);
+  if(piece===inkPiece)sealInk()});   /* 모양이 바뀐 조각에는 이어 쓰지 않는다 */
+ if(hit)dirty=true;
+ return hit}
+function setInkMode(on){inkMode=on;inkErase=false;sealInk();
+ $$('#pen-bar .ink-mode').forEach((b,i)=>b.classList.toggle('selected',i===0));
  $('#paper').classList.toggle('drawing',on);
  $('#add-ink').setAttribute('aria-pressed',String(on));
  $('#add-ink').classList.toggle('on',on);
  $('#pen-bar').classList.toggle('hidden',!on);
  $('.edit-hint').classList.toggle('hidden',on);
  if(on)selectPiece(null)}
+/* 펜이냐 지우개냐 — 서랍처럼 모드는 단추로 가른다 */
+[['펜',false],['지우개',true]].forEach(([name,erase],i)=>{
+ const b=el('button','ink-mode'+(i===0?' selected':''),name);
+ b.onclick=()=>{inkErase=erase;sealInk();   /* 모드를 바꾸면 쓰던 묶음은 끝낸다 */
+  $$('#pen-bar .ink-mode').forEach(x=>x.classList.toggle('selected',x===b));
+  $('#pen-bar').classList.toggle('erasing',erase)};
+ $('#pen-bar').append(b)});
 INK_COLORS.forEach(c=>{const b=el('button','ink-color'+(c===inkColor?' selected':''));b.style.background=c;
  b.setAttribute('aria-label','잉크 색 '+c);
  b.onclick=()=>{inkColor=c;sealInk();$$('#pen-bar .ink-color').forEach(x=>x.classList.toggle('selected',x===b))};
@@ -194,10 +277,18 @@ $('#add-ink').onclick=()=>setInkMode(!inkMode);
   const v=Math.hypot(x-last[0],y-last[1]);
   return Math.max(.45,Math.min(1,1-v/90))}; /* 빠를수록 가늘게 — 종이 좌표 기준 */
  paper.addEventListener('pointerdown',e=>{if(!inkMode)return;
+  /* 이미 다른 손가락이 닿아 있으면 그건 확대하려는 것이다 — 긋지 않는다 */
+  if(e.pointerType!=='mouse'&&PTS.size>1)return;
   e.preventDefault();e.stopPropagation();paper.setPointerCapture(e.pointerId);
-  const pt=at(e);inkDrawing={c:inkColor,w:inkWidth,p:[[+pt[0].toFixed(1),+pt[1].toFixed(1),.7]]};
+  const pt=at(e);
+  if(inkErase){mark();eraseAt(pt[0],pt[1],14);return}
+  mark();
+  inkDrawing={c:inkColor,w:inkWidth,p:[[+pt[0].toFixed(1),+pt[1].toFixed(1),.7]]};
   inkStrokes.push(inkDrawing);renderInkPiece()},true);
- paper.addEventListener('pointermove',e=>{if(!inkMode||!inkDrawing)return;
+ paper.addEventListener('pointermove',e=>{
+  if(inkMode&&inkErase&&e.buttons!==0&&paper.hasPointerCapture(e.pointerId)){
+   const pt=at(e);eraseAt(pt[0],pt[1],14);return}
+  if(!inkMode||!inkDrawing)return;
   /* 브라우저는 한 프레임 사이의 이동을 하나로 합쳐 준다. 합쳐진 것까지 꺼내야 획이 끊기지 않는다. */
   const moves=(e.getCoalescedEvents&&e.getCoalescedEvents().length?e.getCoalescedEvents():[e]);
   let added=false;
@@ -285,10 +376,10 @@ $('#photo-input').onchange=async e=>{const files=[...e.target.files];e.target.va
    toast('사진을 추가했어요.');return}
   toast(files.length+'장을 놓아보는 중…');
   const photos=[];for(const f of files.slice(0,8))photos.push(await shrinkPhoto(f));
-  autoLayout(photos,activePage);
+  mark();autoLayout(photos,activePage);
   toast(photos.length+'장을 놓았어요. 다시 고르면 다르게 놓아요.')}
  catch{toast('JPG 또는 PNG 사진으로 다시 시도해주세요.')}};
-$('#delete-item').onclick=()=>{if(selected){selected.remove();selectPiece(null);dirty=true}else toast('삭제할 조각을 먼저 눌러주세요.')};
+$('#delete-item').onclick=()=>{if(selected){mark();selected.remove();selectPiece(null);dirty=true}else toast('삭제할 조각을 먼저 눌러주세요.')};
 const PATTERN={
  ruled:(g,W,H)=>{g.fillStyle='rgba(126,115,99,.22)';for(let y=0;y<H;y+=44)g.fillRect(0,y,W,1.3)},
  dot:(g,W,H)=>{g.fillStyle='rgba(126,115,99,.35)';for(let y=17;y<H;y+=34)for(let x=17;x<W;x+=34){g.beginPath();g.arc(x,y,2,0,7);g.fill()}},

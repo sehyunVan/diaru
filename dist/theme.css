@@ -189,3 +189,22 @@ body{font-family:'Noto Sans KR',sans-serif;background:#eeede9;-webkit-font-smoot
 .sheet-item.danger{color:#a4545d}
 .sheet-item.cancel{background:transparent;color:var(--muted);text-align:center;margin:4px 0 0}
 .reactions .react.more{margin-left:auto;letter-spacing:1px}
+
+/* 편집기 — 되돌리기·다시하기, 그리고 펜/지우개 */
+.editor-meta #undo,.editor-meta #redo{width:34px;height:34px;border-radius:50%;background:var(--ivory-2);
+  color:var(--navy);font-size:16px;line-height:1;flex-shrink:0}
+.editor-meta #undo[disabled],.editor-meta #redo[disabled]{opacity:.32}
+#pen-bar .ink-mode{padding:6px 12px;border-radius:14px;background:var(--ivory-2);color:var(--muted);
+  font-size:11px;font-weight:600;flex-shrink:0}
+#pen-bar .ink-mode.selected{background:var(--navy);color:var(--ivory)}
+/* 지우개일 때는 색·굵기를 고를 일이 없다 — 흐려 둔다 */
+#pen-bar.erasing .ink-color,#pen-bar.erasing .ink-nib{opacity:.3;pointer-events:none}
+/* 펜을 든 동안에는 브라우저가 종이를 대신 밀지 않게 한다.
+   확대한 채로 글을 쓰면 획과 화면이동이 같이 일어나던 것이 이것이었다.
+   확대·두 손가락 밀기는 우리가 직접 처리하므로 잃는 것이 없다. */
+#paper.drawing{touch-action:none}
+/* 단추가 아홉이라 좁은 화면에서는 빠듯하다 — 눌리는 크기를 줄이지 말고 옆으로 밀리게 둔다.
+   safe center: 넘칠 때 가운데 정렬이 왼쪽을 잘라먹는 것을 막는다. */
+#pen-bar{overflow-x:auto;overflow-y:hidden;scrollbar-width:none;justify-content:safe center}
+#pen-bar::-webkit-scrollbar{display:none}
+#pen-bar>*{flex-shrink:0}

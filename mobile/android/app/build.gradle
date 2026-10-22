@@ -7,7 +7,7 @@ android {
         applicationId "sarl.diaru.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 26102203
+        versionCode 26102204
         versionName "1.0.1022"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
