@@ -79,10 +79,38 @@ PAPER_COLORS.forEach(c=>{const b=el('button');b.dataset.color=c;b.style.backgrou
 function resizePaper(){const w=$('.paper-area').clientWidth-24;if(w<=0)return;scale=Math.min(1,w/1200)*zoom;$('#paper').style.transform=`scale(${scale})`;$('.paper-frame').style.width=1200*scale+'px';$('.paper-frame').style.height=1000*scale+'px'}window.addEventListener('resize',resizePaper);
 function choosePage(page){activePage=page;['#select-left','#select-right'].forEach((s,i)=>{$(s).classList.toggle('selected',i===page);$(s).setAttribute('aria-pressed',String(i===page))});if(zoom>1)$('.paper-area').scrollLeft=page*600*scale}
 const FONT_STYLES={gaegu:'"Gaegu", cursive',nanum:'"Nanum Pen Script", cursive',sans:'"Noto Sans KR", sans-serif',serif:'"Noto Serif KR", serif'};
-function applyPieceStyle(p,data){const rotation=Number.isFinite(Number(data.rotation))?Number(data.rotation):0;p.dataset.rotation=rotation;p.style.transform='rotate('+rotation+'deg)';if(p.dataset.type==='text'){const font=Object.hasOwn(FONT_STYLES,data.font)?data.font:'gaegu';p.dataset.font=font;p.dataset.bold=String(data.bold===true);p.dataset.italic=String(data.italic===true);p.style.fontFamily=FONT_STYLES[font];p.style.fontWeight=data.bold===true?'700':'400';p.style.fontStyle=data.italic===true?'italic':'normal'}}
-function syncSelectionToolbar(){const toolbar=$('#selection-toolbar');toolbar.classList.toggle('hidden',!selected);if(!selected)return;const text=selected.dataset.type==='text';$('#selection-kind').textContent={text:'텍스트',photo:'사진',sticker:'스티커',ink:'손글씨'}[selected.dataset.type];$('#text-options').classList.toggle('hidden',!text);const rotation=Number(selected.dataset.rotation||0);$('#rotation-slider').value=rotation;$('#rotation-value').textContent=rotation+'°';if(text){$('#font-family').value=selected.dataset.font||'gaegu';$('#font-bold').setAttribute('aria-pressed',selected.dataset.bold||'false');$('#font-italic').setAttribute('aria-pressed',selected.dataset.italic||'false')}}
+function applyPieceStyle(p,data){const rotation=Number.isFinite(Number(data.rotation))?Number(data.rotation):0;p.dataset.rotation=rotation;p.style.transform='rotate('+rotation+'deg)';if(p.dataset.type==='text'){const font=Object.hasOwn(FONT_STYLES,data.font)?data.font:'gaegu';p.dataset.font=font;p.dataset.bold=String(data.bold===true);p.dataset.italic=String(data.italic===true);p.style.fontFamily=FONT_STYLES[font];p.style.fontWeight=data.bold===true?'700':'400';p.style.fontStyle=data.italic===true?'italic':'normal';
+ const size=Number(data.size);if(size>0){p.dataset.size=size;p.style.fontSize=size+'px'}}}
+function syncSelectionToolbar(quiet){const toolbar=$('#selection-toolbar');toolbar.classList.toggle('hidden',!selected);if(!selected)return;const text=selected.dataset.type==='text';
+ {const t=selected.dataset.type,[lo,hi]=SIZE_RANGE[t]||[28,600],now=sizeOf(selected);
+  $('#size-slider').min=lo;$('#size-slider').max=hi;
+  if(!quiet)$('#size-slider').value=now;
+  $('#size-value').textContent=String(now)}$('#selection-kind').textContent={text:'텍스트',photo:'사진',sticker:'스티커',ink:'손글씨'}[selected.dataset.type];$('#text-options').classList.toggle('hidden',!text);const rotation=Number(selected.dataset.rotation||0);$('#rotation-slider').value=rotation;$('#rotation-value').textContent=rotation+'°';if(text){$('#font-family').value=selected.dataset.font||'gaegu';$('#font-bold').setAttribute('aria-pressed',selected.dataset.bold||'false');$('#font-italic').setAttribute('aria-pressed',selected.dataset.italic||'false')}}
 function selectPiece(p){if(selected&&selected!==p&&selected.isContentEditable)selected.blur();$$('#paper .piece').forEach(x=>x.classList.toggle('selected',x===p));selected=p;syncSelectionToolbar()}
 function setRotation(value){if(!selected)return;mark();const angle=Math.max(-180,Math.min(180,Math.round(value)));selected.dataset.rotation=angle;selected.style.transform='rotate('+angle+'deg)';dirty=true;syncSelectionToolbar()}
+/* ── 크기 ────────────────────────────────────────────
+   글은 글자 크기, 나머지는 폭(높이는 지금 비율을 지킨다).
+   기본값은 CSS 가 들고 있는 것과 같다 — 글 27px · 스티커 85 · 사진 220 · 손글씨는 그려진 크기. */
+const SIZE_RANGE={text:[12,140],sticker:[28,520],photo:[60,900],ink:[28,900]};
+const SIZE_BASE={text:27,sticker:85,photo:220};
+const sizeOf=p=>p.dataset.type==='text'
+ ? Math.round(Number(p.dataset.size)||parseFloat(getComputedStyle(p).fontSize)||27)
+ : Math.round(p.offsetWidth);
+function setSize(value,quiet){if(!selected)return;
+ const t=selected.dataset.type,[lo,hi]=SIZE_RANGE[t]||[28,600];
+ const v=Math.max(lo,Math.min(hi,Math.round(value)));
+ if(v===sizeOf(selected))return;
+ mark();
+ if(t==='text'){selected.dataset.size=v;selected.style.fontSize=v+'px'}
+ else{const w=selected.offsetWidth||1,ratio=(selected.offsetHeight||1)/w;
+  selected.style.width=v+'px';selected.style.height=Math.round(v*ratio)+'px'}
+ dirty=true;syncSelectionToolbar(quiet)}
+$('#size-slider').oninput=e=>setSize(Number(e.target.value),true);
+$('#size-down').onclick=()=>setSize(Math.round(sizeOf(selected)/1.15));
+$('#size-up').onclick=()=>setSize(Math.round(sizeOf(selected)*1.15));
+$('#size-reset').onclick=()=>{if(!selected)return;
+ const t=selected.dataset.type;
+ setSize(t==='ink'?Math.round(inkBounds(JSON.parse(selected.dataset.strokes||'[]'),2).w):SIZE_BASE[t]||220)};
 $('#rotation-slider').oninput=e=>setRotation(Number(e.target.value));$('#rotate-left').onclick=()=>setRotation(Number(selected?.dataset.rotation||0)-15);$('#rotate-right').onclick=()=>setRotation(Number(selected?.dataset.rotation||0)+15);$('#rotation-reset').onclick=()=>setRotation(0);$('#deselect-piece').onclick=()=>selectPiece(null);
 $('#font-family').onchange=e=>{if(selected?.dataset.type!=='text')return;mark();selected.dataset.font=e.target.value;selected.style.fontFamily=FONT_STYLES[e.target.value];dirty=true};
 for(const [id,key,property,on,off] of [['#font-bold','bold','fontWeight','700','400'],['#font-italic','italic','fontStyle','italic','normal']]){$(id).onclick=()=>{if(selected?.dataset.type!=='text')return;mark();const enabled=selected.dataset[key]!=='true';selected.dataset[key]=String(enabled);selected.style[property]=enabled?on:off;dirty=true;syncSelectionToolbar()}}
@@ -158,9 +186,12 @@ if(data.type==='ink'){const strokes=Array.isArray(data.strokes)?data.strokes:[];
  p.style.width=w+'px';p.style.height=hgt+'px';p.dataset.strokes=JSON.stringify(strokes);
  p.innerHTML=inkSvg(strokes,w,hgt);p.setAttribute('aria-label','손글씨');}
 else if(data.type==='photo'){const img=el('img');img.src=data.content;img.alt='다이어리 사진';p.append(img);p.style.width=(data.w||220)+'px';p.style.height=(data.h||190)+'px'}else if(data.type==='sticker'){if(typeof data.src==='string'&&data.src.startsWith('data:')){p.dataset.src=data.src;p.classList.add('custom');p.setAttribute('aria-label',data.content||'내 스티커');p.style.backgroundImage='url('+data.src+')'}else{const n=Number.isInteger(data.sprite)?data.sprite:2,pack=PACK_BY_ID[data.pack]||PACKS[0];p.dataset.sprite=n;p.dataset.pack=pack.id;p.classList.add('pack-'+pack.id);p.setAttribute('aria-label',data.content||pack.cells[n]?.[0]||'스티커');p.style.backgroundPosition=`${(n%4)*100/3}% ${Math.floor(n/4)*100/3}%`}}else p.textContent=data.content;
+/* 크기를 저장해 뒀으면 되살린다 — 스티커는 CSS 가 85 를 들고 있어서, 안 되살리면 다시 열 때 작아진다 */
+if((data.type==='sticker'||data.type==='photo')&&Number(data.w)>0){p.style.width=Number(data.w)+'px';
+ p.style.height=(Number(data.h)>0?Number(data.h):Number(data.w))+'px'}
 applyPieceStyle(p,data);p.onpointerdown=e=>{selectPiece(p);if(p.isContentEditable)return;const box=p.getBoundingClientRect();if(data.type==='photo'&&e.clientX>box.right-18&&e.clientY>box.bottom-18){mark();dirty=true;return}e.preventDefault();p.setPointerCapture(e.pointerId);const x=e.clientX,y=e.clientY,left=p.offsetLeft,top=p.offsetTop;const before=snapshot();let moved=false;p.onpointermove=ev=>{if(!moved){moved=true;pushSnapshot(before)}p.style.left=Math.max(0,Math.min(1200-p.offsetWidth,left+(ev.clientX-x)/scale))+'px';p.style.top=Math.max(0,Math.min(1000-p.offsetHeight,top+(ev.clientY-y)/scale))+'px';dirty=true};p.onpointerup=p.onpointercancel=()=>{p.onpointermove=null}};
 if(data.type==='text'){p.ondblclick=()=>{selectPiece(p);p.contentEditable='true';p.focus()};p.onblur=()=>{p.contentEditable='false';dirty=true};p.oninput=()=>dirty=true;p.onpaste=e=>{e.preventDefault();const sel=window.getSelection();if(sel.rangeCount){const r=sel.getRangeAt(0);r.deleteContents();r.insertNode(document.createTextNode(e.clipboardData.getData('text/plain')));sel.collapseToEnd()}}}$('#paper').append(p);dirty=true;return p;}
-function capture(){return{...current,layout:'spread',title:$('#title-input').value.trim()||'이름 없는 하루',background:$('#paper-color').value,paper:$('#paper').dataset.paper||'plain',shared:$('#share-scope').getAttribute('aria-pressed')==='true',items:$$('#paper .piece').map(p=>({type:p.dataset.type,content:p.dataset.type==='photo'?p.querySelector('img').getAttribute('src'):p.dataset.type==='sticker'?p.getAttribute('aria-label'):p.dataset.type==='ink'?'손글씨':p.innerText,sprite:p.dataset.sprite===undefined?undefined:Number(p.dataset.sprite),pack:p.dataset.pack,src:p.dataset.src,strokes:p.dataset.strokes?JSON.parse(p.dataset.strokes):undefined,rotation:Number(p.dataset.rotation||0),font:p.dataset.font,bold:p.dataset.bold==='true',italic:p.dataset.italic==='true',x:p.offsetLeft,y:p.offsetTop,w:p.offsetWidth,h:p.offsetHeight}))}}
+function capture(){return{...current,layout:'spread',title:$('#title-input').value.trim()||'이름 없는 하루',background:$('#paper-color').value,paper:$('#paper').dataset.paper||'plain',shared:$('#share-scope').getAttribute('aria-pressed')==='true',items:$$('#paper .piece').map(p=>({type:p.dataset.type,content:p.dataset.type==='photo'?p.querySelector('img').getAttribute('src'):p.dataset.type==='sticker'?p.getAttribute('aria-label'):p.dataset.type==='ink'?'손글씨':p.innerText,sprite:p.dataset.sprite===undefined?undefined:Number(p.dataset.sprite),pack:p.dataset.pack,src:p.dataset.src,strokes:p.dataset.strokes?JSON.parse(p.dataset.strokes):undefined,rotation:Number(p.dataset.rotation||0),font:p.dataset.font,bold:p.dataset.bold==='true',italic:p.dataset.italic==='true',size:Number(p.dataset.size)||undefined,x:p.offsetLeft,y:p.offsetTop,w:p.offsetWidth,h:p.offsetHeight}))}}
 function save(){if(!current)return;const d=capture(),next=diaries.some(x=>x.id===d.id)?diaries.map(x=>x.id===d.id?d:x):[d,...diaries];try{diaries=next;cacheDiaries();pushDiary(d);current=d;dirty=false;renderDiaries();closeEditor(true);goto('home');toast('오늘의 기록을 저장했어요 ♡')}catch{toast('저장 공간이 부족해요. 공유 파일로 먼저 보관해주세요.')}}
 /* ── 되돌리기 / 다시하기 ─────────────────────────────
    종이에 놓인 것들만 기억한다(제목·공개 범위는 아니다 — 글자를 고치다 되돌려지면 성가시다).
@@ -448,7 +479,7 @@ async function spreadToBlob(scale){const W=1200,H=1000,paper=$('#paper');
     if(pack.blend==='multiply')g.globalCompositeOperation='multiply';
     g.drawImage(sheet,(n%4)*cell,Math.floor(n/4)*cell,cell,cell,0,0,w,h);g.globalCompositeOperation='source-over'}}catch{}
   }else{
-   const size=27,lh=size*1.55;
+   const size=Number(p.dataset.size)||27,lh=size*1.55;
    g.fillStyle=getComputedStyle(p).color;g.textBaseline='middle';
    g.font=(p.dataset.italic==='true'?'italic ':'')+(p.dataset.bold==='true'?'700 ':'400 ')+size+'px '+FONT_STYLES[p.dataset.font||'gaegu'];
    let y=4+lh/2;for(const line of wrapText(g,p.innerText,532)){g.fillText(line,4,y);y+=lh}
@@ -485,7 +516,8 @@ let feedMode='mine',activity=[];try{activity=JSON.parse(localStorage.getItem('di
 /* 펼친 책 한 장 — 피드·나의 기록·남의 프로필이 같은 그림을 쓴다 */
 function spreadPreview(d){const preview=el('div','feed-spread paper-surface');preview.style.backgroundColor=d.background||'#fffdf7';if(d.paper&&d.paper!=='plain')preview.classList.add('p-'+d.paper);const mini=chromeNode(d.paper,true);if(mini)preview.append(mini);const surface=el('div','feed-surface');(d.items||[]).forEach(item=>{const p=el('div','feed-piece '+item.type);p.dataset.type=item.type;p.style.left=item.x/12+'%';p.style.top=item.y/10+'%';applyPieceStyle(p,{...item});if(item.type==='photo'){const img=el('img');img.src=item.content;img.alt='';p.style.width=(item.w||220)/12+'%';p.style.height=(item.h||190)/10+'%';p.append(img)}else if(item.type==='ink'){p.style.width=(item.w||100)/12+'%';p.style.height=(item.h||100)/10+'%';
   p.innerHTML=inkSvg(item.strokes||[],item.w||100,item.h||100)}
- else if(item.type==='sticker'){p.style.width='7.08%';if(typeof item.src==='string'&&item.src.startsWith('data:')){const im=el('img','custom-art');im.src=item.src;im.alt='';p.append(im)}else p.append(art(item.sprite??2,'',item.pack))}else{p.textContent=item.content;p.style.width=(item.w||540)/12+'%'}surface.append(p)});preview.append(surface);return preview}
+ else if(item.type==='sticker'){p.style.width=(item.w||85)/12+'%';if(typeof item.src==='string'&&item.src.startsWith('data:')){const im=el('img','custom-art');im.src=item.src;im.alt='';p.append(im)}else p.append(art(item.sprite??2,'',item.pack))}else{p.textContent=item.content;p.style.width=(item.w||540)/12+'%';
+  if(item.size>0)p.style.fontSize=(7*item.size/27).toFixed(2)+'px'}surface.append(p)});preview.append(surface);return preview}
 function renderFeed(){if(!$('#feed-list'))return;$('#feed-list').replaceChildren();$('.feed-privacy').textContent=feedMode==='mine'?'나만 보는 기록 · 이 기기에 저장된 다이어리':'친구가 된 사람의 기록만 보여요';const records=feedMode==='mine'?diaries.filter(d=>!String(d.id||'').startsWith('sample-')):friendFeed();if(!records.length){const empty=el('div','empty-state');empty.append(el('span','empty-symbol',feedMode==='mine'?'✎':'♡'),el('h2','',feedMode==='mine'?'첫 번째 이야기를 남겨보세요':'친구의 기록은 아직 여기 없어요'),el('p','',feedMode==='mine'?'저장한 다이어리가 이곳에 모여요.':'다이어리는 아직 기기에만 저장돼요. 서버로 옮기면 여기 쌓여요.'));const b=el('button','primary',feedMode==='mine'?'새 다이어리 만들기':'친구 찾기');b.onclick=()=>feedMode==='mine'?openEditor():goto('people');empty.append(b);$('#feed-list').append(empty);return}records.forEach(d=>{const card=el('div','feed-card');const top=el('div','feed-card-top');top.append(el('b','',d.author?(d.author.name?d.author.name+' @'+d.author.handle:'@'+d.author.handle):'나의 기록'),el('small','',d.date+(d.author?' · 친구 공개':d.shared?' · 친구 공개':' · 나만 보기')));const preview=spreadPreview(d);card.append(top,preview,el('h2','',d.title));
  card.append(reactionRow(d));
  if(!d.author){const open=el('button','feed-open','기록 열기 ›');open.onclick=()=>openEditor(d);card.append(open)}
