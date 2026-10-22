@@ -191,8 +191,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:#eeede9;-webkit-font-smoot
 .reactions .react.more{margin-left:auto;letter-spacing:1px}
 
 /* 편집기 — 되돌리기·다시하기, 그리고 펜/지우개 */
+/* 앱의 다른 아이콘과 같은 선 그림 — paths 의 undo·redo 를 쓴다 */
 .editor-meta #undo,.editor-meta #redo{width:34px;height:34px;border-radius:50%;background:var(--ivory-2);
-  color:var(--navy);font-size:16px;line-height:1;flex-shrink:0}
+  color:var(--navy);flex-shrink:0;display:grid;place-items:center;padding:0}
+.editor-meta #undo svg,.editor-meta #redo svg{width:19px;height:19px;display:block}
 .editor-meta #undo[disabled],.editor-meta #redo[disabled]{opacity:.32}
 #pen-bar .ink-mode{padding:6px 12px;border-radius:14px;background:var(--ivory-2);color:var(--muted);
   font-size:11px;font-weight:600;flex-shrink:0}
