@@ -26,8 +26,11 @@ node ../tools/version.mjs        # 버전 네 자리
 npm run apk                      # 디버그 APK
 npm run release-apk              # 서명본 APK  ← 지문이 걸린 것은 이걸로 시험한다
 npm run aab                      # Play 에 올릴 AAB
-# iOS 는 맥에서 ios/App 을 Xcode 로 열어 Archive
+node ../tools/ios-ready.mjs      # 맥에 들고 가기 전 확인 (iOS 는 윈도우에서 못 굽는다)
 ```
+
+구운 것은 `android/app/build/outputs/` 에 떨어진다 — `bundle/release/*.aab` 와 `apk/release/*.apk`.
+서명은 `android/keystore.properties` 가 있을 때만 붙는다. 없으면 release 가 **서명 없이** 나오고 Play 가 안 받는다.
 
 안드로이드 빌드 전에 두 가지가 필요하다. 둘 다 SHIPPING.md §4 에 적힌 함정이다:
 

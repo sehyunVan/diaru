@@ -300,14 +300,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 26102101;
+				CURRENT_PROJECT_VERSION = 26102201;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1021;
+				MARKETING_VERSION = 1.0.1022;
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
 				DEVELOPMENT_TEAM = FN9DUHVG65;
 				PRODUCT_BUNDLE_IDENTIFIER = sarl.diaru.app;
@@ -323,14 +323,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 26102101;
+				CURRENT_PROJECT_VERSION = 26102201;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1021;
+				MARKETING_VERSION = 1.0.1022;
 				DEVELOPMENT_TEAM = FN9DUHVG65;
 				PRODUCT_BUNDLE_IDENTIFIER = sarl.diaru.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";

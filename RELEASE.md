@@ -42,8 +42,27 @@ node ../tools/version.mjs            # 버전 네 자리
 npm run apk                          # 디버그 APK (폰에 꽂아 보기)
 npm run release-apk                  # 서명본 APK — **구글 로그인/지문 시험은 이걸로**
 npm run aab                          # Play 에 올릴 AAB
-# iOS 는 맥에서 mobile/ios/App 을 Xcode 로 열어 Archive
+node ../tools/ios-ready.mjs          # 맥에 들고 가기 전 21가지 확인
 ```
+
+**iOS 는 윈도우에서 못 굽는다.** Xcode 가 macOS 전용이라 Archive·.ipa 는 맥에서만 나온다.
+여기서 할 수 있는 것은 「맥에서 열면 Archive 말고 할 일이 없게」 만들어 두는 것까지고,
+그게 됐는지는 `tools/ios-ready.mjs` 가 본다(팀 ID·세로 고정·권한 설명·장면·SPM 경로·번들·버전).
+
+### 2026-10-22 에 구운 것
+
+| | |
+|---|---|
+| AAB (Play) | `build/diaru-1.0.1022-26102201.aab` · 16.3MB |
+| APK (서명본, 폰에 직접) | `build/diaru-1.0.1022-26102201.apk` · 16.8MB |
+| 서명 | `C:/Users/sehyu/keys/diaru-upload.jks` · SHA-1 `3A:DF:C3:F6:37:E5:B9:43:CC:C7:84:25:6B:02:74:CB:C7:1A:06:B5` |
+| iOS | 프로젝트만 — 맥에서 Archive |
+
+`build/` 는 저장소에 안 들어간다. 다시 구우면 같은 것이 나온다.
+
+**업로드 키를 잃으면 같은 앱을 업데이트할 수 없다.** 비밀번호는
+`mobile/android/keystore.properties` 에 있고, 설명은 `C:/Users/sehyu/keys/README-diaru.txt` 에 있다.
+둘 다 **이 컴퓨터 밖에 한 벌** 둬라.
 
 ## 사람이 해야 하는 것 — 코드로 못 한다
 

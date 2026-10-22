@@ -28,3 +28,6 @@ keystore.properties
 *.keystore
 *.p8
 *.env
+
+# 구운 앱 — 32MB 짜리다. 다시 구우면 되므로 저장소에 안 넣는다
+build/
