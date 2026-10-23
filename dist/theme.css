@@ -214,3 +214,35 @@ body{font-family:'Noto Sans KR',sans-serif;background:#eeede9;-webkit-font-smoot
 /* 크기 줄 — 회전 줄 바로 밑. 생김새는 글씨 설정 줄을 그대로 쓴다(판을 새로 만들지 않는다) */
 #size-slider{flex:1;min-width:40px;height:24px;accent-color:#637f9e}
 #size-options #size-reset{width:auto;min-width:38px;padding:0 7px;font-family:inherit;font-size:11px}
+
+/* 선택 도구막대는 흐름에서 뺀다 — 뜨고 질 때 노트가 따라 움직이면 안 된다.
+   높이 0 짜리 자리(.toolbar-anchor)를 종이 영역 바로 앞에 두고, 막대는 그 위에 띄운다. */
+.toolbar-anchor{position:relative;height:0;z-index:6}
+.toolbar-anchor .selection-toolbar{position:absolute;top:0;left:16px;right:16px;margin:0;
+  background:#f6f2e9f2;backdrop-filter:blur(6px);box-shadow:0 6px 18px #2d3c5018}
+
+/* ── 사진 틀 ────────────────────────────────────────
+   예전에는 폴라로이드가 강제였고 사진이 object-fit:cover 로 그 안에 잘려 들어갔다.
+   이제 기본은 「없음」 — 조각 크기가 원본 비율이라 cover 여도 안 잘린다. */
+.piece.photo{padding:0;background:none;box-shadow:none;resize:none;overflow:visible}
+.piece.photo img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.piece.photo.f-polaroid{padding:8px 8px 23px;background:#fff;box-shadow:0 3px 6px #0002}
+.piece.photo.f-white{padding:7px;background:#fff;box-shadow:0 2px 5px #0001}
+.piece.photo.f-round img{border-radius:14px}
+.piece.photo.f-circle img{border-radius:50%}
+.piece.photo.f-shadow img{box-shadow:0 6px 16px #2d3c5038}
+/* 미리보기·내보내기 쪽도 같은 틀을 쓴다 */
+.feed-piece.photo{padding:0;background:none;box-shadow:none}
+.feed-piece.photo.f-polaroid{padding:2px 2px 5px;background:#fff;box-shadow:0 1px 2px #0002}
+.feed-piece.photo.f-white{padding:2px;background:#fff}
+.feed-piece.photo.f-round img{border-radius:3px}
+.feed-piece.photo.f-circle img{border-radius:50%}
+
+/* 사진 바 — 펜 바와 같은 판 */
+#photo-bar{flex-wrap:wrap;row-gap:7px}
+#photo-bar .photo-row{display:flex;gap:6px;align-items:center;flex:1 0 100%;
+  overflow-x:auto;scrollbar-width:none;padding-bottom:1px}
+#photo-bar .photo-row::-webkit-scrollbar{display:none}
+#photo-bar .photo-row>*{flex-shrink:0}
+#photo-bar .ink-nib{white-space:nowrap}
+#photo-bar .storage-head{font-size:9px;color:var(--muted);margin-left:4px;white-space:nowrap}

@@ -105,15 +105,30 @@ PAPERS.forEach(([id,name])=>{const b=el('button');b.dataset.paper=id;b.setAttrib
 PAPER_COLORS.forEach(c=>{const b=el('button');b.dataset.color=c;b.style.background=c;b.setAttribute('aria-label',c+' 속지 색');b.onclick=()=>{mark();$('#paper-color').value=c;$('#paper').style.backgroundColor=c;markSwatch(c);dirty=true};$('#paper-swatches').append(b)});
 function resizePaper(){const w=$('.paper-area').clientWidth-24;if(w<=0)return;scale=Math.min(1,w/1200)*zoom;$('#paper').style.transform=`scale(${scale})`;$('.paper-frame').style.width=1200*scale+'px';$('.paper-frame').style.height=1000*scale+'px'}window.addEventListener('resize',resizePaper);
 function choosePage(page){activePage=page;['#select-left','#select-right'].forEach((s,i)=>{$(s).classList.toggle('selected',i===page);$(s).setAttribute('aria-pressed',String(i===page))});if(zoom>1)$('.paper-area').scrollLeft=page*600*scale}
+/* 사진 틀 — 「없음」이 기본이다. 예전에는 폴라로이드가 강제였고 사진이 그 안에 잘려 들어갔다. */
+const PHOTO_FRAMES=[['none','없음'],['polaroid','폴라로이드'],['white','흰 테두리'],['round','둥근 모서리'],['circle','원형'],['shadow','그림자']];
+/* 필터 — 캔버스(이미지 저장)도 같은 문자열을 쓴다 */
+const PHOTO_FILTERS=[['none','원본',''],['mono','흑백','grayscale(1)'],['sepia','세피아','sepia(.75)'],
+ ['warm','따뜻하게','saturate(1.25) hue-rotate(-10deg) brightness(1.05)'],
+ ['cool','차갑게','saturate(1.1) hue-rotate(12deg) brightness(1.02)'],
+ ['faded','바랜','contrast(.85) saturate(.75) brightness(1.08)'],
+ ['sharp','또렷하게','contrast(1.2) saturate(1.1)']];
+const filterCss=id=>(PHOTO_FILTERS.find(f=>f[0]===id)||PHOTO_FILTERS[0])[2];
+function applyPhotoLook(p,data){
+ const frame=PHOTO_FRAMES.some(([k])=>k===data.frame)?data.frame:'none';
+ const filter=PHOTO_FILTERS.some(([k])=>k===data.filter)?data.filter:'none';
+ p.dataset.frame=frame;p.dataset.filter=filter;
+ PHOTO_FRAMES.forEach(([k])=>p.classList.toggle('f-'+k,k===frame));
+ const img=p.querySelector('img');if(img)img.style.filter=filterCss(filter)||'none'}
 const FONT_STYLES={gaegu:'"Gaegu", cursive',nanum:'"Nanum Pen Script", cursive',sans:'"Noto Sans KR", sans-serif',serif:'"Noto Serif KR", serif'};
-function applyPieceStyle(p,data){const rotation=Number.isFinite(Number(data.rotation))?Number(data.rotation):0;p.dataset.rotation=rotation;p.style.transform='rotate('+rotation+'deg)';if(p.dataset.type==='text'){const font=Object.hasOwn(FONT_STYLES,data.font)?data.font:'gaegu';p.dataset.font=font;p.dataset.bold=String(data.bold===true);p.dataset.italic=String(data.italic===true);p.style.fontFamily=FONT_STYLES[font];p.style.fontWeight=data.bold===true?'700':'400';p.style.fontStyle=data.italic===true?'italic':'normal';
+function applyPieceStyle(p,data){if(p.dataset.type==='photo')applyPhotoLook(p,data);const rotation=Number.isFinite(Number(data.rotation))?Number(data.rotation):0;p.dataset.rotation=rotation;p.style.transform='rotate('+rotation+'deg)';if(p.dataset.type==='text'){const font=Object.hasOwn(FONT_STYLES,data.font)?data.font:'gaegu';p.dataset.font=font;p.dataset.bold=String(data.bold===true);p.dataset.italic=String(data.italic===true);p.style.fontFamily=FONT_STYLES[font];p.style.fontWeight=data.bold===true?'700':'400';p.style.fontStyle=data.italic===true?'italic':'normal';
  const size=Number(data.size);if(size>0){p.dataset.size=size;p.style.fontSize=size+'px'}}}
 function syncSelectionToolbar(quiet){const toolbar=$('#selection-toolbar');toolbar.classList.toggle('hidden',!selected);if(!selected)return;const text=selected.dataset.type==='text';
  {const t=selected.dataset.type,[lo,hi]=SIZE_RANGE[t]||[28,600],now=sizeOf(selected);
   $('#size-slider').min=lo;$('#size-slider').max=hi;
   if(!quiet)$('#size-slider').value=now;
   $('#size-value').textContent=String(now)}$('#selection-kind').textContent={text:'텍스트',photo:'사진',sticker:'스티커',ink:'손글씨'}[selected.dataset.type];$('#text-options').classList.toggle('hidden',!text);const rotation=Number(selected.dataset.rotation||0);$('#rotation-slider').value=rotation;$('#rotation-value').textContent=rotation+'°';if(text){$('#font-family').value=selected.dataset.font||'gaegu';$('#font-bold').setAttribute('aria-pressed',selected.dataset.bold||'false');$('#font-italic').setAttribute('aria-pressed',selected.dataset.italic||'false')}}
-function selectPiece(p){if(selected&&selected!==p&&selected.isContentEditable)selected.blur();$$('#paper .piece').forEach(x=>x.classList.toggle('selected',x===p));selected=p;syncSelectionToolbar()}
+function selectPiece(p){photoBarFor(p);if(selected&&selected!==p&&selected.isContentEditable)selected.blur();$$('#paper .piece').forEach(x=>x.classList.toggle('selected',x===p));selected=p;syncSelectionToolbar()}
 function setRotation(value){if(!selected)return;mark();const angle=Math.max(-180,Math.min(180,Math.round(value)));selected.dataset.rotation=angle;selected.style.transform='rotate('+angle+'deg)';dirty=true;syncSelectionToolbar()}
 /* ── 크기 ────────────────────────────────────────────
    글은 글자 크기, 나머지는 폭(높이는 지금 비율을 지킨다).
@@ -152,7 +167,12 @@ $('#select-left').onclick=()=>choosePage(0);$('#select-right').onclick=()=>choos
 $('#zoom-paper').onclick=()=>setZoom(zoom>1.02?1:2);
 
 /* 두 손가락으로 확대·축소 — 집은 자리를 손가락 사이에 그대로 붙들어 둔다. */
-const PTS=new Map();   /* 지금 종이에 닿아 있는 손가락들 — 펜도 이걸 보고 「혼자인지」 안다 */
+const PTS=new Map();   /* 지금 종이에 닿아 있는 손가락들 — 펜도 조각도 이걸 보고 「혼자인지」 안다 */
+let dragging=null;     /* 지금 끌고 있는 조각과, 집었을 때의 자리 */
+function cancelPieceDrag(){if(!dragging)return;
+ const {el:d,left,top}=dragging;d.onpointermove=null;
+ d.style.left=left+'px';d.style.top=top+'px';   /* 손가락이 늘면 움직인 만큼 되돌린다 */
+ dragging=null}
 (function pinchZoom(){const area=$('.paper-area'),pts=PTS;
  let startGap=0,startZoom=1,cx=0,cy=0;
  const two=()=>[...pts.values()].slice(-2); /* 늘 '가장 최근 두 손가락' — 떼는 신호를 놓쳐도 다음 제스처가 산다 */
@@ -167,7 +187,7 @@ const PTS=new Map();   /* 지금 종이에 닿아 있는 손가락들 — 펜도
   pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
   /* 손가락이 둘이 되면 그건 확대하겠다는 뜻이다 — 첫 손가락이 긋고 있던 획은 없던 일로 한다.
      (펜을 든 채로 확대하면 획이 그어지던 것이 이것이었다) */
-  if(pts.size>=2){abortInkStroke();rebase();$$('#paper .piece').forEach(p=>{p.onpointermove=null})}},true);
+  if(pts.size>=2){abortInkStroke();cancelPieceDrag();rebase()}},true);
  area.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;
   pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(pts.size!==2||!startGap)return;
@@ -216,9 +236,18 @@ else if(data.type==='photo'){const img=el('img');img.src=data.content;img.alt='�
 /* 크기를 저장해 뒀으면 되살린다 — 스티커는 CSS 가 85 를 들고 있어서, 안 되살리면 다시 열 때 작아진다 */
 if((data.type==='sticker'||data.type==='photo')&&Number(data.w)>0){p.style.width=Number(data.w)+'px';
  p.style.height=(Number(data.h)>0?Number(data.h):Number(data.w))+'px'}
-applyPieceStyle(p,data);p.onpointerdown=e=>{selectPiece(p);if(p.isContentEditable)return;const box=p.getBoundingClientRect();if(data.type==='photo'&&e.clientX>box.right-18&&e.clientY>box.bottom-18){mark();dirty=true;return}e.preventDefault();p.setPointerCapture(e.pointerId);const x=e.clientX,y=e.clientY,left=p.offsetLeft,top=p.offsetTop;const before=snapshot();let moved=false;p.onpointermove=ev=>{if(!moved){moved=true;pushSnapshot(before)}p.style.left=Math.max(0,Math.min(1200-p.offsetWidth,left+(ev.clientX-x)/scale))+'px';p.style.top=Math.max(0,Math.min(1000-p.offsetHeight,top+(ev.clientY-y)/scale))+'px';dirty=true};p.onpointerup=p.onpointercancel=()=>{p.onpointermove=null}};
+applyPieceStyle(p,data);p.onpointerdown=e=>{
+ if(e.pointerType!=='mouse'&&PTS.size>1)return;        /* 손가락이 둘이면 확대·이동이다 — 조각은 가만히 */
+ const wasPicked=selected===p;selectPiece(p);
+ if(p.isContentEditable)return;
+ const box=p.getBoundingClientRect();
+ if(data.type==='photo'&&e.clientX>box.right-18&&e.clientY>box.bottom-18){mark();dirty=true;return}
+ if(!wasPicked)return;                                   /* 처음 누른 것은 고르기까지만 */
+ e.preventDefault();p.setPointerCapture(e.pointerId);const x=e.clientX,y=e.clientY,left=p.offsetLeft,top=p.offsetTop;const before=snapshot();let moved=false;
+ dragging={el:p,left,top};
+ p.onpointermove=ev=>{if(!dragging)return;if(!moved){moved=true;pushSnapshot(before)}p.style.left=Math.max(0,Math.min(1200-p.offsetWidth,left+(ev.clientX-x)/scale))+'px';p.style.top=Math.max(0,Math.min(1000-p.offsetHeight,top+(ev.clientY-y)/scale))+'px';dirty=true};p.onpointerup=p.onpointercancel=()=>{p.onpointermove=null;dragging=null}};
 if(data.type==='text'){p.ondblclick=()=>{selectPiece(p);p.contentEditable='true';p.focus()};p.onblur=()=>{p.contentEditable='false';dirty=true};p.oninput=()=>dirty=true;p.onpaste=e=>{e.preventDefault();const sel=window.getSelection();if(sel.rangeCount){const r=sel.getRangeAt(0);r.deleteContents();r.insertNode(document.createTextNode(e.clipboardData.getData('text/plain')));sel.collapseToEnd()}}}$('#paper').append(p);dirty=true;return p;}
-function capture(){return{...current,layout:'spread',title:$('#title-input').value.trim()||'이름 없는 하루',background:$('#paper-color').value,paper:$('#paper').dataset.paper||'plain',shared:$('#share-scope').getAttribute('aria-pressed')==='true',items:$$('#paper .piece').map(p=>({type:p.dataset.type,content:p.dataset.type==='photo'?p.querySelector('img').getAttribute('src'):p.dataset.type==='sticker'?p.getAttribute('aria-label'):p.dataset.type==='ink'?'손글씨':p.innerText,sprite:p.dataset.sprite===undefined?undefined:Number(p.dataset.sprite),pack:p.dataset.pack,src:p.dataset.src,strokes:p.dataset.strokes?JSON.parse(p.dataset.strokes):undefined,rotation:Number(p.dataset.rotation||0),font:p.dataset.font,bold:p.dataset.bold==='true',italic:p.dataset.italic==='true',size:Number(p.dataset.size)||undefined,x:p.offsetLeft,y:p.offsetTop,w:p.offsetWidth,h:p.offsetHeight}))}}
+function capture(){return{...current,layout:'spread',title:$('#title-input').value.trim()||'이름 없는 하루',background:$('#paper-color').value,paper:$('#paper').dataset.paper||'plain',shared:$('#share-scope').getAttribute('aria-pressed')==='true',items:$$('#paper .piece').map(p=>({type:p.dataset.type,content:p.dataset.type==='photo'?p.querySelector('img').getAttribute('src'):p.dataset.type==='sticker'?p.getAttribute('aria-label'):p.dataset.type==='ink'?'손글씨':p.innerText,sprite:p.dataset.sprite===undefined?undefined:Number(p.dataset.sprite),pack:p.dataset.pack,src:p.dataset.src,strokes:p.dataset.strokes?JSON.parse(p.dataset.strokes):undefined,rotation:Number(p.dataset.rotation||0),font:p.dataset.font,bold:p.dataset.bold==='true',italic:p.dataset.italic==='true',size:Number(p.dataset.size)||undefined,frame:p.dataset.frame,filter:p.dataset.filter,x:p.offsetLeft,y:p.offsetTop,w:p.offsetWidth,h:p.offsetHeight}))}}
 function save(){if(!current)return;const d=capture(),next=diaries.some(x=>x.id===d.id)?diaries.map(x=>x.id===d.id?d:x):[d,...diaries];try{diaries=next;cacheDiaries();pushDiary(d);current=d;dirty=false;renderDiaries();closeEditor(true);goto('home');toast('오늘의 기록을 저장했어요 ♡')}catch{toast('저장 공간이 부족해요. 공유 파일로 먼저 보관해주세요.')}}
 /* ── 되돌리기 / 다시하기 ─────────────────────────────
    종이에 놓인 것들만 기억한다(제목·공개 범위는 아니다 — 글자를 고치다 되돌려지면 성가시다).
@@ -304,7 +333,79 @@ function eraseAt(x,y,r){
   if(piece===inkPiece)sealInk()});   /* 모양이 바뀐 조각에는 이어 쓰지 않는다 */
  if(hit)dirty=true;
  return hit}
-function setInkMode(on){inkMode=on;inkErase=false;sealInk();
+
+/* ── 사진 바 ─────────────────────────────────────────
+   사진을 고르면 아래에 뜬다. 모드는 단추로 가르고(틀 / 필터 / 배경),
+   고르는 것들은 그 아래 한 줄에 깔린다 — 펜 바와 같은 판을 쓴다. */
+let photoTab='frame';
+function photoBarFor(p){
+ const bar=$('#photo-bar');if(!bar)return;
+ const on=!!p&&p.dataset.type==='photo';
+ bar.classList.toggle('hidden',!on);
+ if(!on){bar.replaceChildren();return}
+ bar.replaceChildren();
+ [['frame','틀'],['filter','필터'],['bg','배경']].forEach(([id,name])=>{
+  const b=el('button','ink-mode'+(photoTab===id?' selected':''),name);
+  b.onclick=()=>{photoTab=id;photoBarFor(selected)};bar.append(b)});
+ const row=el('span','photo-row');bar.append(row);
+ if(photoTab==='frame'){
+  PHOTO_FRAMES.forEach(([id,name])=>{const b=el('button','ink-nib'+(p.dataset.frame===id?' selected':''),name);
+   b.onclick=()=>{mark();applyPhotoLook(p,{frame:id,filter:p.dataset.filter});dirty=true;photoBarFor(p)};
+   row.append(b)})}
+ else if(photoTab==='filter'){
+  PHOTO_FILTERS.forEach(([id,name])=>{const b=el('button','ink-nib'+(p.dataset.filter===id?' selected':''),name);
+   b.onclick=()=>{mark();applyPhotoLook(p,{frame:p.dataset.frame,filter:id});dirty=true;photoBarFor(p)};
+   row.append(b)})}
+ else{
+  const go=el('button','ink-nib','배경 지우기');
+  go.onclick=()=>eraseBackground(p,go);
+  const back=el('button','ink-nib','되돌리기');
+  back.onclick=()=>{const src=p.dataset.origSrc;if(!src)return toast('아직 지운 적이 없어요.');
+   mark();p.querySelector('img').src=src;delete p.dataset.origSrc;dirty=true;toast('원래 사진으로 돌렸어요.')};
+  row.append(go,back);
+  row.append(el('small','storage-head','가장자리 색과 비슷한 부분을 지워요. 배경이 단순할수록 잘 돼요.'))}}
+
+/* 배경 지우기 — 네 모서리 색에서 시작해 비슷한 색만 번져 나가며 지운다(플러드 필).
+   라이브러리를 쓰지 않는다. 배경이 단순할 때만 쓸 만하고, 그래서 화면에도 그렇게 적어 둔다. */
+async function eraseBackground(piece,button){
+ const img=piece.querySelector('img');if(!img)return;
+ button.disabled=true;const was=button.textContent;button.textContent='지우는 중…';
+ try{
+  const src=img.getAttribute('src');
+  const im=new Image();im.decoding='async';
+  await new Promise((ok,no)=>{im.onload=ok;im.onerror=no;im.src=src});
+  const W=im.naturalWidth,H=im.naturalHeight;
+  const c=document.createElement('canvas');c.width=W;c.height=H;
+  const g=c.getContext('2d',{willReadFrequently:true});
+  g.drawImage(im,0,0);
+  const d=g.getImageData(0,0,W,H),px=d.data;
+  const at=(x,y)=>(y*W+x)*4;
+  const seeds=[[0,0],[W-1,0],[0,H-1],[W-1,H-1]];
+  const base=seeds.map(([x,y])=>{const i=at(x,y);return[px[i],px[i+1],px[i+2]]});
+  const TOL=58*58*3;                       /* 제곱 거리로 비교한다 — 제곱근을 안 뽑으려고 */
+  const near=i=>base.some(b=>{const dr=px[i]-b[0],dg=px[i+1]-b[1],db=px[i+2]-b[2];
+   return dr*dr+dg*dg+db*db<=TOL});
+  const seen=new Uint8Array(W*H);
+  const stack=[];
+  for(const [x,y] of seeds){const k=y*W+x;if(!seen[k]){seen[k]=1;stack.push(k)}}
+  let wiped=0;
+  while(stack.length){const k=stack.pop(),x=k%W,y=(k-x)/W,i=k*4;
+   if(!near(i))continue;
+   px[i+3]=0;wiped++;
+   if(x>0&&!seen[k-1]){seen[k-1]=1;stack.push(k-1)}
+   if(x<W-1&&!seen[k+1]){seen[k+1]=1;stack.push(k+1)}
+   if(y>0&&!seen[k-W]){seen[k-W]=1;stack.push(k-W)}
+   if(y<H-1&&!seen[k+W]){seen[k+W]=1;stack.push(k+W)}}
+  if(!wiped){toast('지울 배경을 못 찾았어요. 배경이 단순한 사진에서 잘 돼요.');return}
+  g.putImageData(d,0,0);
+  mark();
+  if(!piece.dataset.origSrc)piece.dataset.origSrc=src;   /* 되돌릴 수 있게 원본을 들고 있는다 */
+  img.src=c.toDataURL('image/png');                      /* 투명을 살리려면 PNG 여야 한다 */
+  piece.dataset.src=img.src;dirty=true;
+  toast('배경을 지웠어요. ('+Math.round(wiped/(W*H)*100)+'%)')}
+ catch{toast('배경을 지우지 못했어요.')}
+ finally{button.disabled=false;button.textContent=was}}
+function setInkMode(on){inkMode=on;inkErase=false;sealInk();if(on)photoBarFor(null);
  $$('#pen-bar .ink-mode').forEach((b,i)=>b.classList.toggle('selected',i===0));
  $('#paper').classList.toggle('drawing',on);
  $('#add-ink').setAttribute('aria-pressed',String(on));
@@ -430,7 +531,9 @@ $('#photo-input').onchange=async e=>{const files=[...e.target.files];e.target.va
  if(!files.length)return;
  try{
   if(files.length===1){const p=await shrinkPhoto(files[0]);
-   placePiece({type:'photo',content:p.src,x:150,y:200,w:250,h:260});
+   /* 가로든 세로든 긴 쪽을 300 에 맞춘다 — 비율은 원본 그대로 */
+   const long=300,w=p.ratio>=1?long:Math.round(long*p.ratio),h=p.ratio>=1?Math.round(long/p.ratio):long;
+   placePiece({type:'photo',content:p.src,x:150,y:200,w,h});
    toast('사진을 추가했어요.');return}
   toast(files.length+'장을 놓아보는 중…');
   const photos=[];for(const f of files.slice(0,8))photos.push(await shrinkPhoto(f));
@@ -492,8 +595,25 @@ async function spreadToBlob(scale){const W=1200,H=1000,paper=$('#paper');
   const w=p.offsetWidth,h=p.offsetHeight,rot=Number(p.dataset.rotation||0);
   g.save();g.translate(p.offsetLeft+w/2,p.offsetTop+h/2);g.rotate(rot*Math.PI/180);g.translate(-w/2,-h/2);
   if(p.dataset.type==='photo'){
-   g.save();g.shadowColor='rgba(0,0,0,.13)';g.shadowBlur=6;g.shadowOffsetY=3;g.fillStyle='#fff';g.fillRect(0,0,w,h);g.restore();
-   const img=p.querySelector('img');if(img?.naturalWidth)drawCover(g,img,8,8,w-16,h-31);
+   /* 틀마다 종이 자리와 사진 자리가 다르다 — 화면의 CSS 와 같은 숫자를 쓴다 */
+   const frame=p.dataset.frame||'none';
+   let ix=0,iy=0,iw=w,ih=h;
+   if(frame==='polaroid'){
+    g.save();g.shadowColor='rgba(0,0,0,.13)';g.shadowBlur=6;g.shadowOffsetY=3;g.fillStyle='#fff';g.fillRect(0,0,w,h);g.restore();
+    ix=8;iy=8;iw=w-16;ih=h-31}
+   else if(frame==='white'){
+    g.save();g.shadowColor='rgba(0,0,0,.08)';g.shadowBlur=5;g.shadowOffsetY=2;g.fillStyle='#fff';g.fillRect(0,0,w,h);g.restore();
+    ix=7;iy=7;iw=w-14;ih=h-14}
+   else if(frame==='shadow'){g.save();g.shadowColor='rgba(45,60,80,.22)';g.shadowBlur=16;g.shadowOffsetY=6;
+    g.fillStyle='#fff';g.fillRect(0,0,w,h);g.restore()}
+   const img=p.querySelector('img');
+   if(img?.naturalWidth){
+    g.save();
+    if(frame==='circle'){g.beginPath();g.ellipse(ix+iw/2,iy+ih/2,iw/2,ih/2,0,0,Math.PI*2);g.clip()}
+    else if(frame==='round'){const r=14;g.beginPath();g.roundRect(ix,iy,iw,ih,r);g.clip()}
+    const f=filterCss(p.dataset.filter);if(f)g.filter=f;   /* 캔버스도 같은 필터 문자열을 안다 */
+    drawCover(g,img,ix,iy,iw,ih);
+    g.filter='none';g.restore()}
   }else if(p.dataset.type==='ink'){
    const strokes=JSON.parse(p.dataset.strokes||'[]'),box=inkBounds(strokes,0);
    const sx=w/(Number(p.style.width.replace('px',''))||box.w||1);
@@ -541,7 +661,8 @@ $('#export').onclick=async()=>{const button=$('#export');button.disabled=true;to
 $('#profile-name-edit').onclick=()=>setProfileEditing(true);$('#profile-bio-edit').onclick=()=>setProfileEditing(true);
 let feedMode='mine',activity=[];try{activity=JSON.parse(localStorage.getItem('diaru-activity'))||[]}catch{}
 /* 펼친 책 한 장 — 피드·나의 기록·남의 프로필이 같은 그림을 쓴다 */
-function spreadPreview(d){const preview=el('div','feed-spread paper-surface');preview.style.backgroundColor=d.background||'#fffdf7';if(d.paper&&d.paper!=='plain')preview.classList.add('p-'+d.paper);const mini=chromeNode(d.paper,true);if(mini)preview.append(mini);const surface=el('div','feed-surface');(d.items||[]).forEach(item=>{const p=el('div','feed-piece '+item.type);p.dataset.type=item.type;p.style.left=item.x/12+'%';p.style.top=item.y/10+'%';applyPieceStyle(p,{...item});if(item.type==='photo'){const img=el('img');img.src=item.content;img.alt='';p.style.width=(item.w||220)/12+'%';p.style.height=(item.h||190)/10+'%';p.append(img)}else if(item.type==='ink'){p.style.width=(item.w||100)/12+'%';p.style.height=(item.h||100)/10+'%';
+function spreadPreview(d){const preview=el('div','feed-spread paper-surface');preview.style.backgroundColor=d.background||'#fffdf7';if(d.paper&&d.paper!=='plain')preview.classList.add('p-'+d.paper);const mini=chromeNode(d.paper,true);if(mini)preview.append(mini);const surface=el('div','feed-surface');(d.items||[]).forEach(item=>{const p=el('div','feed-piece '+item.type);p.dataset.type=item.type;p.style.left=item.x/12+'%';p.style.top=item.y/10+'%';applyPieceStyle(p,{...item});if(item.type==='photo'){const img=el('img');img.src=item.content;img.alt='';p.style.width=(item.w||220)/12+'%';p.style.height=(item.h||190)/10+'%';p.append(img);
+  applyPhotoLook(p,item)}   /* img 를 붙인 뒤에 다시 — 필터는 img 에 걸린다 */else if(item.type==='ink'){p.style.width=(item.w||100)/12+'%';p.style.height=(item.h||100)/10+'%';
   p.innerHTML=inkSvg(item.strokes||[],item.w||100,item.h||100)}
  else if(item.type==='sticker'){p.style.width=(item.w||85)/12+'%';if(typeof item.src==='string'&&item.src.startsWith('data:')){const im=el('img','custom-art');im.src=item.src;im.alt='';p.append(im)}else p.append(art(item.sprite??2,'',item.pack))}else{p.textContent=item.content;p.style.width=(item.w||540)/12+'%';
   if(item.size>0)p.style.fontSize=(7*item.size/27).toFixed(2)+'px'}surface.append(p)});preview.append(surface);return preview}
