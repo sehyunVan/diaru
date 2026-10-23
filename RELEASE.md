@@ -17,6 +17,7 @@
 | 서버 | `https://diaru.64-227-141-147.sslip.io` |
 | 개인정보처리방침 | `…/legal/privacy.html` |
 | 지원 | `…/legal/support.html` |
+| **아동 안전 기준** | `…/legal/child-safety.html` ← Play 「아동 안전 기준」이 공개 URL 로 요구한다 |
 | **계정 삭제** | `…/legal/delete.html` ← Play 가 **앱 없이 열리는 주소**로 따로 요구한다 |
 | 로그인 | 이메일 여섯 자리 코드 **하나뿐** |
 | 결제 | **없다.** 무료 앱, 인앱 상품 없음 |
@@ -53,8 +54,8 @@ node ../tools/ios-ready.mjs          # 맥에 들고 가기 전 21가지 확인
 
 | | |
 |---|---|
-| AAB (Play) | `build/diaru-1.0.1023-26102301.aab` · 16.3MB |
-| APK (서명본, 폰에 직접) | `build/diaru-1.0.1023-26102301.apk` · 16.8MB |
+| AAB (Play) | `build/diaru-1.0.1023-26102302.aab` · 16.3MB |
+| APK (서명본, 폰에 직접) | `build/diaru-1.0.1023-26102302.apk` · 16.8MB |
 | 서명 | `C:/Users/sehyu/keys/diaru-upload.jks` · SHA-1 `3A:DF:C3:F6:37:E5:B9:43:CC:C7:84:25:6B:02:74:CB:C7:1A:06:B5` |
 | iOS | 프로젝트만 — 맥에서 Archive |
 

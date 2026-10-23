@@ -831,7 +831,7 @@ function actionButton(hd){const how=relation(hd);
    App Store 1.2 는 사용자가 올린 것이 있는 앱에 둘 다 요구한다.
    화면은 하나만 쓴다: 아래에서 올라오는 목록. 사람·기록·댓글이 전부 이걸 쓴다.
    사유 글자는 서버(server/diaru.mjs 의 REPORT_REASONS)와 **똑같아야** 한다 — 다르면 400 이 난다. */
-const REPORT_REASONS=['스팸·광고','괴롭힘·욕설','선정적인 내용','남의 것을 베낌','그 밖에'];
+const REPORT_REASONS=['스팸·광고','괴롭힘·욕설','선정적인 내용','아동 대상 성적 내용','남의 것을 베낌','그 밖에'];
 function sheet(title,items){
  const back=el('div','sheet-back'),box=el('div','sheet');
  const esc=e=>{if(e.key==='Escape')close()};

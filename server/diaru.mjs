@@ -75,7 +75,9 @@ const DIARY_DIR = path.join(path.dirname(DATA), 'diaries');
 /* 신고는 데이터베이스가 아니라 사람이 읽는 줄글이다 — 한 줄에 하나씩 덧붙인다.
    클라이언트도 같은 사유 목록을 들고 있다(dist/app.js 의 REPORT_REASONS). 글자가 다르면 400 이 난다. */
 const REPORTS = path.join(path.dirname(DATA), 'reports.jsonl');
-const REPORT_REASONS = ['스팸·광고', '괴롭힘·욕설', '선정적인 내용', '남의 것을 베낌', '그 밖에'];
+/* 「아동 대상 성적 내용」은 Play 의 아동 안전 기준이 **앱 안에 있어야 한다**고 요구하는 길이다.
+   dist/legal/child-safety.html 이 이 사유를 이름으로 가리키므로, 글자를 바꾸면 그 문서도 같이 고친다. */
+const REPORT_REASONS = ['스팸·광고', '괴롭힘·욕설', '선정적인 내용', '아동 대상 성적 내용', '남의 것을 베낌', '그 밖에'];
 const safeId = id => String(id || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
 const diaryPath = (owner, id) => path.join(DIARY_DIR, owner, safeId(id) + '.json');
 function readDiary(owner, id) { try { return JSON.parse(fs.readFileSync(diaryPath(owner, id), 'utf8')); } catch { return null; } }
