@@ -138,9 +138,11 @@ This account is disabled once the app is approved.
 1. SCREEN RECORDING
 Attached; iPhone, latest iOS, from launch.
 0:00 Launch - start screen, tap Start
-0:08 Sign in: enter email, receive six-digit code, enter it (account creation)
-0:25 Choose a handle (@id), optional display name, seal and header
-0:45 Home; tap New diary
+0:05 Tap Start - no account, straight into the app
+0:10 Make a diary: photos, text, stickers, paper; save. All without signing in
+0:30 Profile > "계정으로 로그인" - sign in with an emailed six-digit code
+0:45 Choose a handle (@id), optional display name, seal and header; the entry
+     made before signing in moves into the account
 0:55 Place photos (auto-layout), add text, add stickers, swap the paper pattern
 1:40 Pen: handwriting on the page
 1:55 Set this entry to "Friends only" and save
@@ -161,12 +163,20 @@ friends, and each entry is additionally marked "Only me" (default) or
 "Friends only".
 
 3. SETUP AND ACCESS
+No account is required. Tap "시작하기" (Start) on the first screen and you are in.
+Everything the app is for - making and decorating a diary spread, papers,
+stickers, handwriting, photos, exporting an image - works with no sign-in, and
+entries are kept on the device.
+An account is needed only for the parts that are account based: finding friends,
+seeing a friend's shared entry, hearts and comments, and notifications. Those
+screens say so and offer to sign in; nothing else is behind the gate.
 Sign-in is a six-digit code sent by email; there is no password and no
-third-party login. For review a fixed account is enabled:
+third-party login. Signing in moves entries made on the device into the account.
+For review a fixed account is enabled:
   Email: <DEMO_EMAIL>   Code: <DEMO_CODE>
-Enter the email on the first screen, tap send, enter the code. The account is
-already set up, so you land on the home screen. A new account starts empty -
-no sample entries and no sample friends, by design.
+Reach it from Profile ("마이") > "계정으로 로그인", or from the link under the
+Start button. A new account starts empty - no sample entries and no sample
+friends, by design.
 "Delete account" is in Profile > Edit profile and erases the handle, profile,
 entries, sessions and friend links in-app; it cannot be undone. The same thing
 can be done without the app, from a web page that asks for the sign-in email,
@@ -207,7 +217,32 @@ ads, and has no paid tier. All twelve papers and all 144 stickers are included.
 
 ---
 
-## 6. 다시 물어올 만한 것
+## 6. 받은 반려
+
+### 5.1.1(v) — 계정 없이 쓸 수 있어야 한다 (2026-10-27, 1.0 / 26102206)
+
+> The app requires users to register or log in to access features that are not account based.
+
+맞는 지적이었다. 꾸미기는 계정이 필요 없는데 시작 화면이 로그인부터 요구했다.
+고친 모양: **시작하기는 바로 앱으로 들어간다.** 기록은 기기에 남고, 로그인은
+친구·피드·마음·댓글·알림에서만 요구한다. 로그인하면 기기에 있던 기록이 계정으로 따라간다.
+
+빌드를 다시 올려야 하는 반려다(코드가 바뀌었다). 답글에 쓸 말:
+
+```
+Fixed in build <새 빌드 번호>.
+
+Tapping "시작하기" (Start) on the first screen now goes straight into the app with
+no account. Creating and decorating diary spreads - papers, stickers, handwriting,
+photos, image export - all work signed out, and entries are stored on the device.
+
+Sign-in is now optional and only gates the account-based parts: finding friends,
+viewing an entry a friend has shared, hearts, comments and notifications. Those
+screens explain why and offer to sign in. Signing in migrates entries made on the
+device into the account, so nothing is lost.
+```
+
+## 7. 다시 물어올 만한 것
 
 미리 답을 정해 두면 한 라운드를 줄인다.
 

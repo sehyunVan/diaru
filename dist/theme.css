@@ -246,3 +246,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:#eeede9;-webkit-font-smoot
 #photo-bar .photo-row>*{flex-shrink:0}
 #photo-bar .ink-nib{white-space:nowrap}
 #photo-bar .storage-head{font-size:9px;color:var(--muted);margin-left:4px;white-space:nowrap}
+
+/* 로그인은 고르는 것이지 거쳐야 하는 문이 아니다 — 시작하기 밑에 조용히 둔다 */
+.landing-login{display:block;margin:12px auto 0;background:transparent;color:#6b7589;
+  font-size:12px;text-decoration:underline;text-underline-offset:3px;padding:8px 12px}
+#profile-login{background:var(--navy);color:var(--ivory)}

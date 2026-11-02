@@ -878,7 +878,7 @@ async function renderPeople(){const list=$('#people-list');if(!list)return;
  $('#people-search').classList.toggle('hidden',peopleTab!=='검색');
  if(!loggedIn()){list.replaceChildren();const empty=el('div','empty-state');
   empty.append(el('span','empty-symbol','♡'),el('h2','','로그인하면 친구를 찾을 수 있어요'),
-   el('p','','시작 화면에서 메일로 들어오면 @아이디로 서로를 찾을 수 있어요.'));
+   el('p','','마이 → 계정으로 로그인 을 누르면 @아이디로 서로를 찾을 수 있어요.'));
   list.append(empty);return}
  let rows=[];
  if(peopleTab==='검색'){try{found=(await api('GET','api/people?q='+encodeURIComponent($('#people-search').value.trim()))).people||[]}catch{found=[]}rows=found}
@@ -931,7 +931,14 @@ function renderPerson(hd){const p=personBy(hd),page=$('#person');if(!p||!page)re
    :how==='incoming'?'이 사람이 먼저 신청했어요. 수락하면 열려요.':'친구 신청을 보내보세요.'));
  page.append(empty)}
 
-function renderProfile(){$('#profile-handle-edit').textContent='@'+me.handle;
+function renderProfile(){
+ /* 계정이 없으면 아이디·친구 수 대신 로그인 자리를 보여 준다 — 꾸미기는 그대로 쓸 수 있다 */
+ {const inAcc=loggedIn(),login=$('#profile-login');
+  if(login){login.classList.toggle('hidden',inAcc);login.onclick=()=>startAuth()}
+  $('#profile-handle-edit').classList.toggle('hidden',!inAcc);
+  $('.profile-stats')?.classList.toggle('hidden',!inAcc);
+  $('.profile-lock')?.classList.toggle('hidden',!inAcc)}
+ $('#profile-handle-edit').textContent='@'+me.handle;
  const cover=me.cover&&(me.cover.startsWith('data:')?me.cover:photos[me.cover]);
  $('.profile-cover').classList.toggle('empty',!cover);
  if(cover)$('#cover-img').src=cover;else $('#cover-img').removeAttribute('src');
@@ -943,7 +950,7 @@ function renderProfile(){$('#profile-handle-edit').textContent='@'+me.handle;
  $('.profile-detail').classList.toggle('no-name',!name);
  $('.profile-bio p').textContent=me.bio;
  $('.profile-bio').classList.toggle('empty',!me.bio);
- document.documentElement.classList.toggle('no-account',!me.onboarded);
+ document.documentElement.classList.toggle('no-account',!loggedIn());
  $('#profile-friends').textContent=rel.friends.length;
  $('#profile-requests').textContent=rel.incoming.length}
 /* 프로필 편집란 — 배경화면 · 인장 · 이름 · 아이디 · 소개를 그 자리에서 고친다. */
@@ -1099,10 +1106,7 @@ async function startAuth(){
  /* 앱에서는 기기에만 사는 계정을 만들지 않는다.
     한 번 만들면 me.onboarded 가 서 버려서 **이메일 단계가 다시는 안 뜬다** — 실제로 그렇게 됐다.
     서버가 잠깐 안 보이는 것뿐이므로, 같은 칸에 이유를 적고 다시 눌러 보게 한다. */
- if(isNative())return showEmailStep('서버에 닿지 못했어요. 연결을 확인하고 「코드 받기」를 다시 눌러 주세요.');
- showAuthStep('auth-handle');
- $('#auth-handle-input').value=me.handle;$('#auth-hint').classList.remove('bad');
- setTimeout(()=>$('#auth-handle-input').focus(),60)}
+ return showEmailStep('서버에 닿지 못했어요. 연결을 확인하고 「코드 받기」를 다시 눌러 주세요.')}
 async function sendCode(){const email=$('#auth-email-input').value.trim();
  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){$('#auth-email-hint').textContent='이메일을 확인해주세요.';$('#auth-email-hint').classList.add('bad');return}
  $('#auth-send').disabled=true;$('#auth-email-hint').classList.remove('bad');$('#auth-email-hint').textContent='보내는 중…';
@@ -1132,12 +1136,28 @@ $('#auth-verify').onclick=async()=>{const code=$('#auth-code-input').value.trim(
  finally{$('#auth-verify').disabled=false}};
 $('#auth-code-input').onkeydown=e=>{if(e.key==='Enter')$('#auth-verify').click()};
 function savedName(){try{return localStorage.getItem('diaru-profile-name')||''}catch{return ''}}
-function finishAuth(){me.onboarded=true;saveMe();renderProfile();
+function finishAuth(){me.onboarded=true;me.entered=true;saveMe();renderProfile();
+ migrateLocalDiaries();
  /* 화면엔 이름이 없으면 @아이디가 뜨지만, 저장되는 이름은 빈 채로 둔다 */
  pushProfile({name:savedName(),bio:me.bio,seal:me.seal,cover:me.cover,onboarded:true});
  $('#auth').classList.add('hidden');$$('.app > :not(#landing):not(#auth)').forEach(e=>e.inert=false);
  goto('home')}
-$('#enter-app').onclick=()=>{if(me.onboarded){goto('home');$('.app-header .logo')?.focus()}else startAuth()};
+/* 계정 없이 들어간다 — 꾸미기는 계정이 필요 없다(App Store 5.1.1(v)).
+   기록은 이 기기에 남고, 나중에 로그인하면 계정으로 옮겨 간다. */
+function enterApp(){me.entered=true;saveMe();goto('home');$('.app-header .logo')?.focus()}
+$('#enter-app').onclick=enterApp;
+{const b=$('#landing-login');if(b)b.onclick=()=>startAuth()}
+/* 이 기기에만 있던 기록을 계정으로 옮긴다 — 안 옮기면 로그인하는 순간 사라진 것처럼 보인다 */
+async function migrateLocalDiaries(){
+ if(!loggedIn())return;
+ let local=[];try{local=JSON.parse(localStorage.getItem('diaru-diaries-v1'))||[]}catch{}
+ if(!Array.isArray(local)||!local.length)return;
+ let moved=0;
+ for(const d of local){try{await api('POST','api/diaries',{diary:d});moved++}catch{}}
+ if(!moved)return;
+ try{localStorage.removeItem('diaru-diaries-v1')}catch{}
+ await pullDiaries();
+ toast('이 기기에 있던 기록 '+moved+'개를 계정으로 옮겼어요.')}
 $('#auth-next').onclick=async()=>{const hd=$('#auth-handle-input').value.trim().toLowerCase().replace(/^@/,'');
  let bad=!HANDLE_RE.test(hd)?'영문 소문자·숫자·밑줄 3~15자로 적어주세요'
   :(RESERVED.includes(hd)||personBy(hd))?'이미 쓰이고 있는 아이디예요':'';
