@@ -58,7 +58,11 @@ if (!nn) {
 }
 if (nn > 99) { console.error('하루에 99번까지다. 날짜가 바뀌길 기다리거나 --build 로 정해라.'); process.exit(1); }
 
-const versionName = `1.0.${mm}${dd}`;
+/* 버전 이름을 직접 줄 수도 있다 — `--name 1.0`.
+   App Store Connect 의 「버전」 레코드와 빌드의 CFBundleShortVersionString 이 **같아야**
+   그 버전에 빌드가 붙는다. 반려를 받고 다시 낼 때는 ASC 에 이미 있는 이름(보통 1.0)을
+   그대로 쓰고 빌드 번호만 올리는 것이 맞다. 새 이름을 쓰려면 ASC 에 그 버전을 새로 만들어야 한다. */
+const versionName = argOf('--name', '') || `1.0.${mm}${dd}`;
 const versionCode = Number(`${yy}${mm}${dd}${String(nn).padStart(2, '0')}`);
 
 let touched = 0, missing = [];

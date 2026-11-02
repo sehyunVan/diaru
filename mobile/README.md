@@ -14,6 +14,7 @@
 | 서버 | `https://diaru.64-227-141-147.sslip.io` ← **빌드에 박힌다** |
 
 제출 순서와 사람이 할 일은 [`../RELEASE.md`](../RELEASE.md).
+**맥에서 iOS 빌드하는 법은 [`IOS.md`](IOS.md)** — 처음 설치부터 Archive·버전까지 거기 모아 뒀다.
 
 ## 한 바퀴
 

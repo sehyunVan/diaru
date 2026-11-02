@@ -54,8 +54,8 @@ node ../tools/ios-ready.mjs          # 맥에 들고 가기 전 21가지 확인
 
 | | |
 |---|---|
-| AAB (Play) | `build/diaru-1.0.1102-26110201.aab` · 16.3MB |
-| APK (서명본, 폰에 직접) | `build/diaru-1.0.1102-26110201.apk` · 16.8MB |
+| AAB (Play) | `build/diaru-1.0-26110202.aab` · 16.3MB |
+| APK (서명본, 폰에 직접) | `build/diaru-1.0-26110202.apk` · 16.8MB |
 | 서명 | `C:/Users/sehyu/keys/diaru-upload.jks` · SHA-1 `3A:DF:C3:F6:37:E5:B9:43:CC:C7:84:25:6B:02:74:CB:C7:1A:06:B5` |
 | iOS | 프로젝트만 — 맥에서 Archive |
 
@@ -64,6 +64,8 @@ node ../tools/ios-ready.mjs          # 맥에 들고 가기 전 21가지 확인
 **업로드 키를 잃으면 같은 앱을 업데이트할 수 없다.** 비밀번호는
 `mobile/android/keystore.properties` 에 있고, 설명은 `C:/Users/sehyu/keys/README-diaru.txt` 에 있다.
 둘 다 **이 컴퓨터 밖에 한 벌** 둬라.
+
+**iOS 를 맥에서 굽는 법은 [`mobile/IOS.md`](mobile/IOS.md) 에 따로 모아 뒀다.**
 
 ## 사람이 해야 하는 것 — 코드로 못 한다
 

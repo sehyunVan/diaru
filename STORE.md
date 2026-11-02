@@ -230,7 +230,7 @@ ads, and has no paid tier. All twelve papers and all 144 stickers are included.
 빌드를 다시 올려야 하는 반려다(코드가 바뀌었다). 답글에 쓸 말:
 
 ```
-Fixed in build <새 빌드 번호>.
+Fixed in build 26110202.
 
 Tapping "시작하기" (Start) on the first screen now goes straight into the app with
 no account. Creating and decorating diary spreads - papers, stickers, handwriting,
